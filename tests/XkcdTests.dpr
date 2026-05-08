@@ -16,7 +16,8 @@ uses
   DUnitX.TestFramework,
   testSixelApi in 'testSixelApi.pas',
   testXkcdHtml in 'testXkcdHtml.pas',
-  testXkcdCache in 'testXkcdCache.pas';
+  testXkcdCache in 'testXkcdCache.pas',
+  testXkcdArgs in 'testXkcdArgs.pas';
 
 { keep comment here to protect the following conditional from being removed by the IDE when adding a unit }
 {$IFNDEF TESTINSIGHT}
