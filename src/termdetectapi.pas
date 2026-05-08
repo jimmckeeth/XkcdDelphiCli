@@ -19,7 +19,7 @@ function ParseOSC11Response(const AResponse: string): TTerminalRGB;
 function ParseTermSizeResponse(const AResponse: string): TTerminalSize;
 function IsDarkColor(const AColor: TTerminalRGB): Boolean;
 
-// Terminal I/O (stub implementations — replaced in Task 8)
+// Terminal I/O
 function TerminalRequest(const ACmd: string; ATimeoutMs: Integer;
   const AEndChars: string): string;
 function DetectProtocol: TTerminalProtocol;
@@ -29,7 +29,20 @@ function IsDarkBackground: Boolean;
 
 implementation
 
-uses System.SysUtils, System.RegularExpressions;
+uses
+  System.SysUtils,
+  System.RegularExpressions,
+  System.DateUtils
+  {$IFDEF MSWINDOWS}
+  , Winapi.Windows
+  {$ELSE}
+  , Posix.Termios
+  , Posix.Unistd
+  , BaseUnix
+  {$ENDIF}
+  ;
+
+// ── Parser helpers ────────────────────────────────────────────────────────────
 
 function ParseDA1Response(const AResponse: string): Boolean;
 var
@@ -102,30 +115,188 @@ begin
   Result := LLum < 128;
 end;
 
-function TerminalRequest(const ACmd: string; ATimeoutMs: Integer;
-  const AEndChars: string): string;
+// ── Raw mode helpers ──────────────────────────────────────────────────────────
+
+{$IFDEF MSWINDOWS}
+
+var
+  GhStdIn:  THandle;
+  GhStdOut: THandle;
+  GSavedIn, GSavedOut: DWORD;
+
+procedure SetRawMode;
+const
+  ENABLE_VIRTUAL_TERMINAL_INPUT = $0200;
 begin
-  Result := '';
+  GhStdIn  := GetStdHandle(STD_INPUT_HANDLE);
+  GhStdOut := GetStdHandle(STD_OUTPUT_HANDLE);
+  GetConsoleMode(GhStdIn,  GSavedIn);
+  GetConsoleMode(GhStdOut, GSavedOut);
+  SetConsoleMode(GhStdIn,
+    (GSavedIn and not ENABLE_LINE_INPUT and not ENABLE_ECHO_INPUT)
+    or ENABLE_VIRTUAL_TERMINAL_INPUT);
+  SetConsoleMode(GhStdOut,
+    GSavedOut or ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 end;
 
+procedure RestoreMode;
+begin
+  SetConsoleMode(GhStdIn,  GSavedIn);
+  SetConsoleMode(GhStdOut, GSavedOut);
+end;
+
+function ReadChar(ADeadline: UInt64): Char;
+var
+  LRec: TInputRecord;
+  LCount: DWORD;
+begin
+  Result := #0;
+  while GetTickCount64 < ADeadline do
+  begin
+    if WaitForSingleObject(GhStdIn, 10) = WAIT_OBJECT_0 then
+    begin
+      if ReadConsoleInput(GhStdIn, LRec, 1, LCount) and (LCount > 0) then
+      begin
+        if (LRec.EventType = KEY_EVENT) and LRec.Event.KeyEvent.bKeyDown then
+        begin
+          Result := LRec.Event.KeyEvent.UnicodeChar;
+          if Result <> #0 then Exit;
+        end;
+      end;
+    end;
+  end;
+end;
+
+{$ELSE}
+
+var
+  GSavedTermios: termios;
+
+procedure SetRawMode;
+var
+  LNew: termios;
+begin
+  tcgetattr(STDIN_FILENO, GSavedTermios);
+  LNew := GSavedTermios;
+  LNew.c_lflag := LNew.c_lflag and not (ICANON or ECHO);
+  LNew.c_cc[VMIN]  := 0;
+  LNew.c_cc[VTIME] := 0;
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, LNew);
+end;
+
+procedure RestoreMode;
+begin
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, GSavedTermios);
+end;
+
+function ReadChar(ADeadline: Int64): Char;
+var
+  LFds: TFDSet;
+  LTV:  TimeVal;
+  LC:   Byte;
+  LNow: Int64;
+begin
+  Result := #0;
+  LNow := DateTimeToUnix(Now) * 1000;
+  while LNow < ADeadline do
+  begin
+    fpFD_ZERO(LFds);
+    fpFD_SET(STDIN_FILENO, LFds);
+    LTV.tv_sec  := 0;
+    LTV.tv_usec := 10000;
+    if fpSelect(STDIN_FILENO + 1, @LFds, nil, nil, @LTV) > 0 then
+    begin
+      if fpRead(STDIN_FILENO, LC, 1) = 1 then
+      begin
+        Result := Char(LC);
+        Exit;
+      end;
+    end;
+    LNow := DateTimeToUnix(Now) * 1000;
+  end;
+end;
+
+{$ENDIF}
+
+// ── TerminalRequest ───────────────────────────────────────────────────────────
+
+function TerminalRequest(const ACmd: string; ATimeoutMs: Integer;
+  const AEndChars: string): string;
+var
+{$IFDEF MSWINDOWS}
+  LDeadline: UInt64;
+{$ELSE}
+  LDeadline: Int64;
+{$ENDIF}
+  LC: Char;
+begin
+  Result := '';
+  SetRawMode;
+  try
+    Write(ACmd);
+    Flush(Output);
+    LDeadline := {$IFDEF MSWINDOWS}GetTickCount64 + UInt64(ATimeoutMs){$ELSE}DateTimeToUnix(Now) * 1000 + ATimeoutMs{$ENDIF};
+    repeat
+      LC := ReadChar(LDeadline);
+      if LC <> #0 then
+      begin
+        Result := Result + LC;
+        if (AEndChars <> '') and (Pos(LC, AEndChars) > 0) then Break;
+      end;
+    until {$IFDEF MSWINDOWS}GetTickCount64{$ELSE}DateTimeToUnix(Now) * 1000{$ENDIF} >= LDeadline;
+  finally
+    RestoreMode;
+  end;
+end;
+
+// ── Protocol detection ────────────────────────────────────────────────────────
+
+const
+  CKittyProbePNG =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==';
+
 function DetectProtocol: TTerminalProtocol;
+var
+  LResp: string;
 begin
   Result := tpNone;
+
+  LResp := TerminalRequest(
+    #$1B + '_G i=31,s=1,v=1,a=q,t=d,f=100;' + CKittyProbePNG + #$1B + '\',
+    300, #$1B);
+  if LResp.Contains('OK') then Exit(tpKittyPlus);
+
+  LResp := TerminalRequest(#$1B + ']1337;ReportCellSize' + #7, 300, #7);
+  if LResp.Contains('ReportCellSize=') then Exit(tpITerm);
+
+  LResp := TerminalRequest(
+    #$1B + '_G i=31,s=1,v=1,a=q,t=d,f=24;AAAA' + #$1B + '\',
+    300, #$1B);
+  if LResp.Contains('OK') then Exit(tpKitty);
+
+  LResp := TerminalRequest(#$1B + '[c', 300, 'c');
+  if ParseDA1Response(LResp) then Exit(tpSixel);
 end;
 
 function QueryTerminalSize: TTerminalSize;
+var
+  LResp: string;
 begin
-  Result.WidthPx := 0; Result.HeightPx := 0;
+  LResp  := TerminalRequest(#$1B + '[14t', 300, 't');
+  Result := ParseTermSizeResponse(LResp);
 end;
 
 function QueryBackgroundColor: TTerminalRGB;
+var
+  LResp: string;
 begin
-  Result.R := 0; Result.G := 0; Result.B := 0;
+  LResp  := TerminalRequest(#$1B + ']11;?' + #7, 300, #7);
+  Result := ParseOSC11Response(LResp);
 end;
 
 function IsDarkBackground: Boolean;
 begin
-  Result := False;
+  Result := IsDarkColor(QueryBackgroundColor);
 end;
 
 end.
