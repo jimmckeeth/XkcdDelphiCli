@@ -19,7 +19,8 @@ uses
   testXkcdCache in 'testXkcdCache.pas',
   testXkcdArgs in 'testXkcdArgs.pas',
   testXkcdHttp in 'testXkcdHttp.pas',
-  testTermDetect in 'testTermDetect.pas';
+  testTermDetect in 'testTermDetect.pas',
+  testKittieApi in 'testKittieApi.pas';
 
 { keep comment here to protect the following conditional from being removed by the IDE when adding a unit }
 {$IFNDEF TESTINSIGHT}

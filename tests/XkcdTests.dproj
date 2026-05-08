@@ -125,6 +125,7 @@
         <DCCReference Include="testXkcdArgs.pas"/>
         <DCCReference Include="testXkcdHttp.pas"/>
         <DCCReference Include="testTermDetect.pas"/>
+        <DCCReference Include="testKittieApi.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
