@@ -28,6 +28,7 @@
         <Base_Win64>true</Base_Win64>
         <CfgParent>Base</CfgParent>
         <Base>true</Base>
+        <DCC_ConsoleTarget>true</DCC_ConsoleTarget>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_1)'!=''">
@@ -101,6 +102,7 @@
         <Cfg_1>true</Cfg_1>
         <Base>true</Base>
         <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
+        <DCC_RemoteDebug>false</DCC_RemoteDebug>
         <Manifest_File>(None)</Manifest_File>
         <DCC_UnitSearchPath>..\lib\Win64\Debug;..\src;$(DUnitX);$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
     </PropertyGroup>
