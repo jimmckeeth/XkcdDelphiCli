@@ -121,6 +121,7 @@
         </DelphiCompile>
         <DCCReference Include="testSixelApi.pas"/>
         <DCCReference Include="testXkcdHtml.pas"/>
+        <DCCReference Include="testXkcdCache.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

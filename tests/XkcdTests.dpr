@@ -15,7 +15,8 @@ uses
   {$ENDIF }
   DUnitX.TestFramework,
   testSixelApi in 'testSixelApi.pas',
-  testXkcdHtml in 'testXkcdHtml.pas';
+  testXkcdHtml in 'testXkcdHtml.pas',
+  testXkcdCache in 'testXkcdCache.pas';
 
 { keep comment here to protect the following conditional from being removed by the IDE when adding a unit }
 {$IFNDEF TESTINSIGHT}
