@@ -86,7 +86,7 @@ var
 begin
   LList := TList<TXkcdComicMeta>.Create;
   try
-    LMatches := TRegEx.Matches(AHtml, '<a href="(/(\d+)/)">([^<]+)</a>');
+    LMatches := TRegEx.Matches(AHtml, '<a href="(/(\d+)/)"[^>]*>([^<]+)</a>');
     for var LMatch in LMatches do
     begin
       LMeta.ID    := StrToIntDef(LMatch.Groups[2].Value, 0);

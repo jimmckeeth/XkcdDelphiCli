@@ -37,9 +37,9 @@ uses xkcdhtml, xkcdmodel, System.SysUtils;
 const
   CSampleArchiveHtml =
     '<div id="middleContainer">' +
-    '<a href="/3/">Forgot to Hit Send</a>' +
-    '<a href="/2/">Game &amp; AIs</a>' +
-    '<a href="/1/">Barrel - Part 1</a>' +
+    '<a href="/3/" title="2006-1-1">Forgot to Hit Send</a>' +
+    '<a href="/2/" title="2006-1-1">Game &amp; AIs</a>' +
+    '<a href="/1/" title="2006-1-1">Barrel - Part 1</a>' +
     '</div>';
 
   CSampleComicHtml =

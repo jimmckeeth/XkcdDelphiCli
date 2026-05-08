@@ -123,6 +123,7 @@
         <DCCReference Include="testXkcdHtml.pas"/>
         <DCCReference Include="testXkcdCache.pas"/>
         <DCCReference Include="testXkcdArgs.pas"/>
+        <DCCReference Include="testXkcdHttp.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
