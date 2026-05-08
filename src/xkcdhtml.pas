@@ -19,6 +19,7 @@ function DecodeNumericEntities(const S: string): string;
 var
   LPos, LEnd, LCode: Integer;
   LNum: string;
+  LIsHex: Boolean;
 begin
   Result := '';
   LPos := 1;
@@ -27,15 +28,35 @@ begin
     if (S[LPos] = '&') and (LPos + 1 <= Length(S)) and (S[LPos + 1] = '#') then
     begin
       LEnd := LPos + 2;
-      while (LEnd <= Length(S)) and CharInSet(S[LEnd], ['0'..'9']) do
+      LIsHex := (LEnd <= Length(S)) and CharInSet(S[LEnd], ['x', 'X']);
+      if LIsHex then
         Inc(LEnd);
-      if (LEnd <= Length(S)) and (S[LEnd] = ';') and (LEnd > LPos + 2) then
+      if LIsHex then
       begin
-        LNum := Copy(S, LPos + 2, LEnd - LPos - 2);
-        LCode := StrToIntDef(LNum, 63);
-        Result := Result + string(WideChar(LCode));
-        LPos := LEnd + 1;
-        Continue;
+        while (LEnd <= Length(S)) and CharInSet(S[LEnd], ['0'..'9', 'a'..'f', 'A'..'F']) do
+          Inc(LEnd);
+      end
+      else
+      begin
+        while (LEnd <= Length(S)) and CharInSet(S[LEnd], ['0'..'9']) do
+          Inc(LEnd);
+      end;
+      if (LEnd <= Length(S)) and (S[LEnd] = ';') then
+      begin
+        if LIsHex then
+          LNum := Copy(S, LPos + 3, LEnd - LPos - 3)
+        else
+          LNum := Copy(S, LPos + 2, LEnd - LPos - 2);
+        if LNum <> '' then
+        begin
+          if LIsHex then
+            LCode := StrToIntDef('$' + LNum, 63)
+          else
+            LCode := StrToIntDef(LNum, 63);
+          Result := Result + string(WideChar(LCode));
+          LPos := LEnd + 1;
+          Continue;
+        end;
       end;
     end;
     Result := Result + S[LPos];
@@ -45,13 +66,16 @@ end;
 
 function HtmlDecode(const S: string): string;
 begin
-  Result := StringReplace(S,       '&amp;',  '&',  [rfReplaceAll]);
+  // Decode numeric entities first so that escaped sequences like &amp;#39;
+  // are not double-decoded (the &amp; pass would otherwise turn &amp;#39;
+  // into &#39; which then decodes a second time).
+  Result := DecodeNumericEntities(S);
+  Result := StringReplace(Result,  '&amp;',  '&',  [rfReplaceAll]);
   Result := StringReplace(Result,  '&lt;',   '<',  [rfReplaceAll]);
   Result := StringReplace(Result,  '&gt;',   '>',  [rfReplaceAll]);
   Result := StringReplace(Result,  '&quot;', '"',  [rfReplaceAll]);
   Result := StringReplace(Result,  '&apos;', '''', [rfReplaceAll]);
   Result := StringReplace(Result,  '&#39;',  '''', [rfReplaceAll]);
-  Result := DecodeNumericEntities(Result);
 end;
 
 function ParseArchive(const AHtml: string): TArray<TXkcdComicMeta>;
@@ -78,15 +102,28 @@ end;
 
 procedure ParseComicPage(const AHtml: string; out AImgSrc, ASubText: string);
 var
-  LMatch: TMatch;
+  LDivMatch, LSrcMatch, LTitleMatch: TMatch;
+  LComicBlock: string;
 begin
-  LMatch := TRegEx.Match(AHtml,
-    '<div id="comic">.*?<img src="//([^"]+)"[^>]+title="([^"]+)"',
+  // Extract the comic div block first so that attribute order within the
+  // <img> tag does not matter.
+  LDivMatch := TRegEx.Match(AHtml,
+    '<div id="comic">.*?</div>',
     [roSingleLine]);
-  if not LMatch.Success then
+  if not LDivMatch.Success then
     raise EXkcdParseError.Create('Comic image not found in page HTML');
-  AImgSrc  := 'https://' + LMatch.Groups[1].Value;
-  ASubText := HtmlDecode(LMatch.Groups[2].Value);
+  LComicBlock := LDivMatch.Value;
+
+  LSrcMatch := TRegEx.Match(LComicBlock, 'src="//([^"]+)"');
+  if not LSrcMatch.Success then
+    raise EXkcdParseError.Create('Comic image src not found in page HTML');
+
+  LTitleMatch := TRegEx.Match(LComicBlock, 'title="([^"]+)"');
+  if not LTitleMatch.Success then
+    raise EXkcdParseError.Create('Comic image title not found in page HTML');
+
+  AImgSrc  := 'https://' + LSrcMatch.Groups[1].Value;
+  ASubText := HtmlDecode(LTitleMatch.Groups[1].Value);
 end;
 
 end.
