@@ -15,11 +15,19 @@ type
     [Test]
     procedure ParseComicPageExtractsImgAndSubtext;
     [Test]
+    procedure ParseComicPageExtractsWhenTitleBeforeSrc;
+    [Test]
     procedure ParseComicPageRaisesOnMissingImg;
+    [Test]
+    procedure ParseComicPageRaisesOnMissingSrc;
+    [Test]
+    procedure ParseComicPageRaisesOnMissingTitle;
     [Test]
     procedure HtmlDecodeHandlesNamedEntities;
     [Test]
     procedure HtmlDecodeHandlesNumericEntities;
+    [Test]
+    procedure HtmlDecodeHandlesHexEntities;
   end;
 
 implementation
@@ -38,6 +46,11 @@ const
     '<div id="comic">' +
     '<img src="//imgs.xkcd.com/comics/barrel.jpg" ' +
     'title="Don&apos;t we all." /></div>';
+
+  CSampleComicHtmlTitleFirst =
+    '<div id="comic">' +
+    '<img title="Don&apos;t we all." ' +
+    'src="//imgs.xkcd.com/comics/barrel.jpg" /></div>';
 
 procedure TTestXkcdHtml.ParseArchiveExtractsComics;
 var
@@ -70,6 +83,15 @@ begin
   Assert.AreEqual('Don''t we all.', LSubText, 'Should decode &apos; (&#39;)');
 end;
 
+procedure TTestXkcdHtml.ParseComicPageExtractsWhenTitleBeforeSrc;
+var
+  LImgSrc, LSubText: string;
+begin
+  ParseComicPage(CSampleComicHtmlTitleFirst, LImgSrc, LSubText);
+  Assert.AreEqual('https://imgs.xkcd.com/comics/barrel.jpg', LImgSrc);
+  Assert.AreEqual('Don''t we all.', LSubText);
+end;
+
 procedure TTestXkcdHtml.ParseComicPageRaisesOnMissingImg;
 var
   LImg, LSub: string;
@@ -78,6 +100,30 @@ begin
     procedure
     begin
       ParseComicPage('<html>no comic div</html>', LImg, LSub);
+    end,
+    EXkcdParseError);
+end;
+
+procedure TTestXkcdHtml.ParseComicPageRaisesOnMissingSrc;
+var
+  LImg, LSub: string;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      ParseComicPage('<div id="comic"><img title="oops"/></div>', LImg, LSub);
+    end,
+    EXkcdParseError);
+end;
+
+procedure TTestXkcdHtml.ParseComicPageRaisesOnMissingTitle;
+var
+  LImg, LSub: string;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      ParseComicPage('<div id="comic"><img src="//imgs.xkcd.com/comics/x.jpg"/></div>', LImg, LSub);
     end,
     EXkcdParseError);
 end;
@@ -92,6 +138,12 @@ procedure TTestXkcdHtml.HtmlDecodeHandlesNumericEntities;
 begin
   Assert.AreEqual('A', HtmlDecode('&#65;'));
   Assert.AreEqual(#169, HtmlDecode('&#169;'));
+end;
+
+procedure TTestXkcdHtml.HtmlDecodeHandlesHexEntities;
+begin
+  Assert.AreEqual('A', HtmlDecode('&#x41;'));
+  Assert.AreEqual(#169, HtmlDecode('&#xA9;'));
 end;
 
 initialization

@@ -66,9 +66,9 @@ end;
 
 function HtmlDecode(const S: string): string;
 begin
-  // Decode numeric entities first so that escaped sequences like &amp;#39;
-  // are not double-decoded (the &amp; pass would otherwise turn &amp;#39;
-  // into &#39; which then decodes a second time).
+  // Decode numeric entities from the raw input before expanding named entities.
+  // This prevents &amp;#65; from becoming A: the &amp; pass would produce &#65;
+  // after the numeric pass has already run, leaving it as the literal text &#65;.
   Result := DecodeNumericEntities(S);
   Result := StringReplace(Result,  '&amp;',  '&',  [rfReplaceAll]);
   Result := StringReplace(Result,  '&lt;',   '<',  [rfReplaceAll]);
@@ -118,7 +118,7 @@ begin
   if not LSrcMatch.Success then
     raise EXkcdParseError.Create('Comic image src not found in page HTML');
 
-  LTitleMatch := TRegEx.Match(LComicBlock, 'title="([^"]+)"');
+  LTitleMatch := TRegEx.Match(LComicBlock, '<img[^>]*title="([^"]+)"');
   if not LTitleMatch.Success then
     raise EXkcdParseError.Create('Comic image title not found in page HTML');
 
