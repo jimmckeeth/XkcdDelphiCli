@@ -32,6 +32,8 @@ type
     procedure InvertDefaultsToTrue;
     [Test]
     procedure NoInvertFlagDisablesInvert;
+    [Test]
+    procedure RandomCommandParsesCorrectly;
   end;
 
 implementation
@@ -135,6 +137,15 @@ var
 begin
   LOptions := ParseArgs(['show', '--latest', '--no-invert']);
   Assert.IsFalse(LOptions.Invert);
+end;
+
+procedure TTestXkcdArgs.RandomCommandParsesCorrectly;
+var
+  LOptions: TXkcdOptions;
+begin
+  LOptions := ParseArgs(['random']);
+  Assert.AreEqual('random', LOptions.SubCommand);
+  Assert.IsTrue(LOptions.Invert);
 end;
 
 initialization

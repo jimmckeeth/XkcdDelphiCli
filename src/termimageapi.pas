@@ -10,10 +10,15 @@ procedure DisplayImage(const AFileName: string;
 procedure AutoDisplayImage(const AFileName: string; AMaxWidth: Integer = 800;
   AInvert: Boolean = False);
 
+procedure SaveInvertedImage(const ASrcPath, ADstPath: string);
+
 implementation
 
 uses
   System.SysUtils,
+  System.IOUtils,
+  System.Types,
+  System.Skia,
   sixelapi,
   kittieapi,
   itermapi
@@ -48,6 +53,29 @@ procedure AutoDisplayImage(const AFileName: string; AMaxWidth: Integer;
   AInvert: Boolean);
 begin
   DisplayImage(AFileName, DetectProtocol, AMaxWidth, AInvert);
+end;
+
+procedure SaveInvertedImage(const ASrcPath, ADstPath: string);
+var
+  LSrc: ISkImage;
+  LSurface: ISkSurface;
+  LInfo: TSkImageInfo;
+  LPaint: ISkPaint;
+  LPngBytes: TBytes;
+begin
+  LSrc := TSkImage.MakeFromEncodedFile(ASrcPath);
+  if not Assigned(LSrc) then
+    raise Exception.CreateFmt('Cannot load image: %s', [ASrcPath]);
+  LInfo    := TSkImageInfo.Create(LSrc.Width, LSrc.Height, TSkColorType.BGRA8888, TSkAlphaType.Opaque);
+  LSurface := TSkSurface.MakeRaster(LInfo);
+  LPaint   := TSkPaint.Create;
+  LPaint.ColorFilter := TSkColorFilter.MakeMatrix(
+    TSkColorMatrix.Create(-1,0,0,0,1, 0,-1,0,0,1, 0,0,-1,0,1, 0,0,0,1,0));
+  LSurface.Canvas.Clear($FFFFFFFF);
+  LSurface.Canvas.DrawImageRect(LSrc,
+    TRectF.Create(0, 0, LSrc.Width, LSrc.Height), TSkSamplingOptions.High, LPaint);
+  LPngBytes := LSurface.MakeImageSnapshot.Encode(TSkEncodedImageFormat.PNG, 100);
+  TFile.WriteAllBytes(ADstPath, LPngBytes);
 end;
 
 end.

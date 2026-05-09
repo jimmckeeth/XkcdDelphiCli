@@ -82,6 +82,11 @@ begin
 
   if AOptions.ComicID > 0 then
     LMeta := FindComicByID(LCache.Comics, AOptions.ComicID)
+  else if AOptions.SubCommand = 'random' then
+  begin
+    Randomize;
+    LMeta := LCache.Comics[Random(Length(LCache.Comics))];
+  end
   else
     LMeta := LCache.Comics[0];
 
@@ -92,21 +97,37 @@ begin
   end;
 
   Writeln(Format('#%d: %s', [LMeta.ID, LMeta.Title]));
-  Writeln(LSubText);
   Writeln;
 
   LImgCachePath := ComicImageCachePath(LMeta.ID);
   if not TFile.Exists(LImgCachePath) then
     FetchImageToFile(LImgSrc, LImgCachePath);
 
+  if AOptions.Invert then
+  begin
+    var LInvPath := ComicImageInvertedCachePath(LMeta.ID);
+    if not TFile.Exists(LInvPath) then
+      SaveInvertedImage(LImgCachePath, LInvPath);
+    LImgCachePath := LInvPath;
+  end;
+
+  LWidth := AOptions.Width;
+  if LWidth <= 0 then
+  begin
+    var LTermSize := QueryTerminalSize;
+    if LTermSize.WidthPx > 0 then
+      LWidth := LTermSize.WidthPx * 9 div 10
+    else
+      LWidth := 1200;
+  end;
+
   if AOptions.NoTerminalGraphics then
     OpenWithOsViewer(LImgCachePath)
   else
-  begin
-    LWidth := AOptions.Width;
-    if LWidth <= 0 then LWidth := 800;
-    AutoDisplayImage(LImgCachePath, LWidth, AOptions.Invert);
-  end;
+    AutoDisplayImage(LImgCachePath, LWidth, False);
+
+  Writeln;
+  Writeln(LSubText);
 end;
 
 end.

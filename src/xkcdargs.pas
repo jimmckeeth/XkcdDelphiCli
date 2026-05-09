@@ -32,7 +32,8 @@ begin
   end;
 
   Result.SubCommand := LowerCase(AArgs[0]);
-  if (Result.SubCommand <> 'show') and (Result.SubCommand <> 'update-cache') then
+  if (Result.SubCommand <> 'show') and (Result.SubCommand <> 'update-cache') and
+     (Result.SubCommand <> 'random') then
     raise EXkcdArgError.CreateFmt('Unknown command: %s', [AArgs[0]]);
 
   I := 1;
