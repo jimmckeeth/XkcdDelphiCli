@@ -28,7 +28,7 @@ begin
   {$IFDEF MSWINDOWS}
   ShellExecute(0, 'open', PChar(AFileName), nil, nil, SW_SHOWNORMAL);
   {$ELSE}
-  Posix.Stdlib.system(PAnsiChar(AnsiString('xdg-open "' + AFileName + '"')));
+  _system(PAnsiChar(AnsiString('xdg-open "' + AFileName + '"')));
   {$ENDIF}
 end;
 

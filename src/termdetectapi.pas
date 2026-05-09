@@ -38,7 +38,8 @@ uses
   {$ELSE}
   , Posix.Termios
   , Posix.Unistd
-  , BaseUnix
+  , Posix.SysSelect
+  , Posix.SysTime
   {$ENDIF}
   ;
 
@@ -191,8 +192,8 @@ end;
 
 function ReadChar(ADeadline: Int64): Char;
 var
-  LFds: TFDSet;
-  LTV:  TimeVal;
+  LFds: fd_set;
+  LTV:  timeval;
   LC:   Byte;
   LNow: Int64;
 begin
@@ -200,13 +201,13 @@ begin
   LNow := DateTimeToUnix(Now) * 1000;
   while LNow < ADeadline do
   begin
-    fpFD_ZERO(LFds);
-    fpFD_SET(STDIN_FILENO, LFds);
+    FD_ZERO(LFds);
+    _FD_SET(STDIN_FILENO, LFds);
     LTV.tv_sec  := 0;
     LTV.tv_usec := 10000;
-    if fpSelect(STDIN_FILENO + 1, @LFds, nil, nil, @LTV) > 0 then
+    if select(STDIN_FILENO + 1, @LFds, nil, nil, @LTV) > 0 then
     begin
-      if fpRead(STDIN_FILENO, LC, 1) = 1 then
+      if __read(STDIN_FILENO, @LC, SizeOf(LC)) = 1 then
       begin
         Result := Char(LC);
         Exit;
