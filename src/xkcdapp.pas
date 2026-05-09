@@ -24,6 +24,33 @@ uses
   {$ENDIF}
   ;
 
+function ProtocolCacheFile(const ACacheDir: string): string;
+begin
+  Result := TPath.Combine(ACacheDir, 'protocol.txt');
+end;
+
+function LoadCachedProtocol(const ACacheDir: string;
+  out AProtocol: TTerminalProtocol): Boolean;
+var
+  LVal: Integer;
+begin
+  var LPath := ProtocolCacheFile(ACacheDir);
+  if not TFile.Exists(LPath) then
+    Exit(False);
+  LVal := StrToIntDef(Trim(TFile.ReadAllText(LPath, TEncoding.UTF8)), -1);
+  if (LVal < Ord(Low(TTerminalProtocol))) or
+     (LVal > Ord(High(TTerminalProtocol))) then
+    Exit(False);
+  AProtocol := TTerminalProtocol(LVal);
+  Result := True;
+end;
+
+procedure SaveCachedProtocol(const ACacheDir: string; AProtocol: TTerminalProtocol);
+begin
+  TFile.WriteAllText(ProtocolCacheFile(ACacheDir),
+    IntToStr(Ord(AProtocol)), TEncoding.UTF8);
+end;
+
 procedure OpenWithOsViewer(const AFileName: string);
 begin
   {$IFDEF MSWINDOWS}
@@ -45,6 +72,7 @@ end;
 procedure Run(const AOptions: TXkcdOptions);
 var
   LCachePath: string;
+  LCacheDir: string;
   LCache: TXkcdCache;
   LMeta: TXkcdComicMeta;
   LImgSrc, LSubText: string;
@@ -52,7 +80,8 @@ var
   LWidth: Integer;
 begin
   LCachePath := CachePath(AOptions.CacheFilename);
-  ForceDirectories(ExtractFileDir(LCachePath));
+  LCacheDir  := ExtractFileDir(LCachePath);
+  ForceDirectories(LCacheDir);
   ForceDirectories(ExtractFileDir(ComicImageCachePath(0)));
   ForceDirectories(ExtractFileDir(ComicDetailCachePath(0)));
 
@@ -66,16 +95,19 @@ begin
     Exit;
   end;
 
-  if AOptions.NoCache or not CacheExists(LCachePath) or
-     IsStale(LoadCache(LCachePath).LastUpdated) then
+  var LNeedsRefresh := AOptions.NoCache or not CacheExists(LCachePath);
+  if not LNeedsRefresh then
+  begin
+    LCache := LoadCache(LCachePath);
+    LNeedsRefresh := IsStale(LCache.LastUpdated);
+  end;
+  if LNeedsRefresh then
   begin
     Writeln('Refreshing cache...');
     LCache.LastUpdated := Now;
     LCache.Comics      := ParseArchive(FetchArchiveHtml);
     SaveCache(LCache, LCachePath);
-  end
-  else
-    LCache := LoadCache(LCachePath);
+  end;
 
   if Length(LCache.Comics) = 0 then
     raise EXkcdError.Create('No comics in cache');
@@ -124,7 +156,15 @@ begin
   if AOptions.NoTerminalGraphics then
     OpenWithOsViewer(LImgCachePath)
   else
-    AutoDisplayImage(LImgCachePath, LWidth, False);
+  begin
+    var LProtocol: TTerminalProtocol;
+    if not LoadCachedProtocol(LCacheDir, LProtocol) then
+    begin
+      LProtocol := DetectProtocol;
+      SaveCachedProtocol(LCacheDir, LProtocol);
+    end;
+    DisplayImage(LImgCachePath, LProtocol, LWidth, False);
+  end;
 
   Writeln;
   Writeln(LSubText);

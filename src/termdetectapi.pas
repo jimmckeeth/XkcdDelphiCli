@@ -264,18 +264,18 @@ begin
 
   LResp := TerminalRequest(
     #$1B + '_G i=31,s=1,v=1,a=q,t=d,f=100;' + CKittyProbePNG + #$1B + '\',
-    300, #$1B);
+    100, #$1B);
   if LResp.Contains('OK') then Exit(tpKittyPlus);
 
-  LResp := TerminalRequest(#$1B + ']1337;ReportCellSize' + #7, 300, #7);
+  LResp := TerminalRequest(#$1B + ']1337;ReportCellSize' + #7, 100, #7);
   if LResp.Contains('ReportCellSize=') then Exit(tpITerm);
 
   LResp := TerminalRequest(
     #$1B + '_G i=31,s=1,v=1,a=q,t=d,f=24;AAAA' + #$1B + '\',
-    300, #$1B);
+    100, #$1B);
   if LResp.Contains('OK') then Exit(tpKitty);
 
-  LResp := TerminalRequest(#$1B + '[c', 300, 'c');
+  LResp := TerminalRequest(#$1B + '[c', 100, 'c');
   if ParseDA1Response(LResp) then Exit(tpSixel);
 end;
 
@@ -283,7 +283,7 @@ function QueryTerminalSize: TTerminalSize;
 var
   LResp: string;
 begin
-  LResp  := TerminalRequest(#$1B + '[14t', 300, 't');
+  LResp  := TerminalRequest(#$1B + '[14t', 100, 't');
   Result := ParseTermSizeResponse(LResp);
 end;
 
@@ -291,7 +291,7 @@ function QueryBackgroundColor: TTerminalRGB;
 var
   LResp: string;
 begin
-  LResp  := TerminalRequest(#$1B + ']11;?' + #7, 300, #7);
+  LResp  := TerminalRequest(#$1B + ']11;?' + #7, 100, #7);
   Result := ParseOSC11Response(LResp);
 end;
 
