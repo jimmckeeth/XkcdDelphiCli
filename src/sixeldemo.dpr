@@ -1,18 +1,18 @@
-program itermdemo;
+program sixeldemo;
 
 {$APPTYPE CONSOLE}
 
 {$R *.res}
 
 uses
-  {$IFDEF MSWINDOWS}
+{$IFDEF MSWINDOWS}
   Winapi.Windows,
-  {$ENDIF }
-  {$IFDEF LINUX}
+{$ENDIF}
+{$IFDEF LINUX}
   LinuxLibStdCxx in 'LinuxLibStdCxx.pas',
-  {$ENDIF }
+{$ENDIF}
   System.SysUtils,
-  itermapi in 'itermapi.pas';
+  sixelapi in 'sixelapi.pas';
 
 {$IFDEF MSWINDOWS}
 procedure EnableVTProcessing;
@@ -38,12 +38,12 @@ begin
     if ParamCount > 0 then
       LImagePath := ParamStr(1)
     else
-      LImagePath := ExtractFilePath(ParamStr(0))  + 'XkcdDelphiCli.webp';
+      LImagePath := ExtractFilePath(ParamStr(0)) + 'XkcdDelphiCli.webp';
 
     if not FileExists(LImagePath) then
       raise Exception.CreateFmt('Image not found: %s', [LImagePath]);
 
-    DisplayImageAsITerm(LImagePath);
+    DisplayImageAsSixel(LImagePath);
   except
     on E: Exception do
       Writeln(ErrOutput, E.ClassName, ': ', E.Message);

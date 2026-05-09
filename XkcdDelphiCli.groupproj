@@ -1,0 +1,84 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{F962B6D6-B894-4980-A924-70CC7FCC8FC5}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="tests\XkcdTests.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="src\sixeldemo.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="src\itermdemo.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="src\kittydemo.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="src\xkcd.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="XkcdTests">
+        <MSBuild Projects="tests\XkcdTests.dproj"/>
+    </Target>
+    <Target Name="XkcdTests:Clean">
+        <MSBuild Projects="tests\XkcdTests.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="XkcdTests:Make">
+        <MSBuild Projects="tests\XkcdTests.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="sixeldemo">
+        <MSBuild Projects="src\sixeldemo.dproj"/>
+    </Target>
+    <Target Name="sixeldemo:Clean">
+        <MSBuild Projects="src\sixeldemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="sixeldemo:Make">
+        <MSBuild Projects="src\sixeldemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="itermdemo">
+        <MSBuild Projects="src\itermdemo.dproj"/>
+    </Target>
+    <Target Name="itermdemo:Clean">
+        <MSBuild Projects="src\itermdemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="itermdemo:Make">
+        <MSBuild Projects="src\itermdemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="kittydemo">
+        <MSBuild Projects="src\kittydemo.dproj"/>
+    </Target>
+    <Target Name="kittydemo:Clean">
+        <MSBuild Projects="src\kittydemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="kittydemo:Make">
+        <MSBuild Projects="src\kittydemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="xkcd">
+        <MSBuild Projects="src\xkcd.dproj"/>
+    </Target>
+    <Target Name="xkcd:Clean">
+        <MSBuild Projects="src\xkcd.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="xkcd:Make">
+        <MSBuild Projects="src\xkcd.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="XkcdTests;sixeldemo;itermdemo;kittydemo;xkcd"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="XkcdTests:Clean;sixeldemo:Clean;itermdemo:Clean;kittydemo:Clean;xkcd:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="XkcdTests:Make;sixeldemo:Make;itermdemo:Make;kittydemo:Make;xkcd:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

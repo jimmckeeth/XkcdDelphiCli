@@ -2,7 +2,7 @@
     <PropertyGroup>
         <Base>True</Base>
         <AppType>Console</AppType>
-        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Config Condition="'$(Config)'==''">Release</Config>
         <FrameworkType>None</FrameworkType>
         <MainSource>xkcd.dpr</MainSource>
         <Platform Condition="'$(Platform)'==''">Win64</Platform>
@@ -60,6 +60,7 @@
     <PropertyGroup Condition="'$(Base)'!=''">
         <SanitizedProjectName>xkcd</SanitizedProjectName>
         <DCC_DcuOutput>..\lib\$(Platform)\$(Config)</DCC_DcuOutput>
+        <DCC_Define>SKIA;$(DCC_Define)</DCC_Define>
         <DCC_ExeOutput>..\bin\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
     </PropertyGroup>
@@ -118,15 +119,7 @@
         <DCCReference Include="LinuxLibStdCxx.pas"/>
         <DCCReference Include="xkcdmodel.pas"/>
         <DCCReference Include="xkcdargs.pas"/>
-        <DCCReference Include="xkcdhtml.pas"/>
-        <DCCReference Include="xkcdcache.pas"/>
-        <DCCReference Include="xkcdhttp.pas"/>
         <DCCReference Include="xkcdapp.pas"/>
-        <DCCReference Include="termdetectapi.pas"/>
-        <DCCReference Include="kittieapi.pas"/>
-        <DCCReference Include="itermapi.pas"/>
-        <DCCReference Include="termimageapi.pas"/>
-        <DCCReference Include="sixelapi.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

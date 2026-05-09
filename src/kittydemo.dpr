@@ -38,7 +38,7 @@ begin
     if ParamCount > 0 then
       LImagePath := ParamStr(1)
     else
-      LImagePath := ExtractFilePath(ParamStr(0)) + 'bottle_2x.png';
+      LImagePath := ExtractFilePath(ParamStr(0)) + 'XkcdDelphiCli.webp';
 
     if not FileExists(LImagePath) then
       raise Exception.CreateFmt('Image not found: %s', [LImagePath]);
