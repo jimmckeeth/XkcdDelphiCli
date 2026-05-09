@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(pwsh -File \"C:\\Users\\jim\\.agents\\skills\\delphi-build\\scripts\\DelphiBuildDPROJ.ps1\" *)",
+      "PowerShell(.\\bin\\Win64\\Debug\\XkcdTests.exe *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Select-String *)",
+      "PowerShell(Get-Content *)"
+    ]
+  }
+}
