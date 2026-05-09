@@ -6,10 +6,13 @@ uses xkcdmodel;
 
 function CachePath(const AOverride: string = ''): string;
 function ComicImageCachePath(AComicID: Integer): string;
+function ComicDetailCachePath(AComicID: Integer): string;
 function IsStale(const ALastUpdated: TDateTime): Boolean;
 function CacheExists(const APath: string): Boolean;
 function LoadCache(const APath: string): TXkcdCache;
 procedure SaveCache(const ACache: TXkcdCache; const APath: string);
+function LoadComicDetail(AComicID: Integer; out AImgSrc, ASubText: string): Boolean;
+procedure SaveComicDetail(AComicID: Integer; const AImgSrc, ASubText: string);
 
 implementation
 
@@ -35,6 +38,14 @@ begin
   Result := TPath.Combine(Result, 'xkcd-cli');
   Result := TPath.Combine(Result, 'images');
   Result := TPath.Combine(Result, AComicID.ToString + '.png');
+end;
+
+function ComicDetailCachePath(AComicID: Integer): string;
+begin
+  Result := TPath.Combine(TPath.GetHomePath, '.cache');
+  Result := TPath.Combine(Result, 'xkcd-cli');
+  Result := TPath.Combine(Result, 'detail');
+  Result := TPath.Combine(Result, AComicID.ToString + '.json');
 end;
 
 function IsStale(const ALastUpdated: TDateTime): Boolean;
@@ -104,6 +115,45 @@ begin
     LRoot.AddPair('comics', LArr);
     ForceDirectories(ExtractFileDir(APath));
     TFile.WriteAllText(APath, LRoot.ToJSON, TEncoding.UTF8);
+  finally
+    LRoot.Free;
+  end;
+end;
+
+function LoadComicDetail(AComicID: Integer; out AImgSrc, ASubText: string): Boolean;
+var
+  LPath: string;
+  LRoot: TJSONObject;
+begin
+  AImgSrc  := '';
+  ASubText := '';
+  LPath := ComicDetailCachePath(AComicID);
+  if not TFile.Exists(LPath) then
+    Exit(False);
+  LRoot := TJSONObject.ParseJSONValue(TFile.ReadAllText(LPath, TEncoding.UTF8)) as TJSONObject;
+  if LRoot = nil then
+    Exit(False);
+  try
+    AImgSrc  := LRoot.GetValue<string>('img_src');
+    ASubText := LRoot.GetValue<string>('sub_text');
+    Result := True;
+  finally
+    LRoot.Free;
+  end;
+end;
+
+procedure SaveComicDetail(AComicID: Integer; const AImgSrc, ASubText: string);
+var
+  LPath: string;
+  LRoot: TJSONObject;
+begin
+  LPath := ComicDetailCachePath(AComicID);
+  ForceDirectories(ExtractFileDir(LPath));
+  LRoot := TJSONObject.Create;
+  try
+    LRoot.AddPair('img_src',  AImgSrc);
+    LRoot.AddPair('sub_text', ASubText);
+    TFile.WriteAllText(LPath, LRoot.ToJSON, TEncoding.UTF8);
   finally
     LRoot.Free;
   end;

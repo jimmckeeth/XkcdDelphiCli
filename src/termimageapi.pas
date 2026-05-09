@@ -5,9 +5,10 @@ interface
 uses termdetectapi;
 
 procedure DisplayImage(const AFileName: string;
-  AProtocol: TTerminalProtocol; AMaxWidth: Integer = 800);
+  AProtocol: TTerminalProtocol; AMaxWidth: Integer = 800; AInvert: Boolean = False);
 
-procedure AutoDisplayImage(const AFileName: string; AMaxWidth: Integer = 800);
+procedure AutoDisplayImage(const AFileName: string; AMaxWidth: Integer = 800;
+  AInvert: Boolean = False);
 
 implementation
 
@@ -33,19 +34,20 @@ begin
 end;
 
 procedure DisplayImage(const AFileName: string;
-  AProtocol: TTerminalProtocol; AMaxWidth: Integer);
+  AProtocol: TTerminalProtocol; AMaxWidth: Integer; AInvert: Boolean);
 begin
   case AProtocol of
-    tpKittyPlus, tpKitty: DisplayImageAsKitty(AFileName, AMaxWidth);
-    tpITerm:              DisplayImageAsITerm(AFileName, AMaxWidth);
-    tpSixel:              DisplayImageAsSixel(AFileName, AMaxWidth);
+    tpKittyPlus, tpKitty: DisplayImageAsKitty(AFileName, AMaxWidth, AInvert);
+    tpITerm:              DisplayImageAsITerm(AFileName, AMaxWidth, AInvert);
+    tpSixel:              DisplayImageAsSixel(AFileName, AMaxWidth, AInvert);
     tpNone:               OpenWithOsViewer(AFileName);
   end;
 end;
 
-procedure AutoDisplayImage(const AFileName: string; AMaxWidth: Integer);
+procedure AutoDisplayImage(const AFileName: string; AMaxWidth: Integer;
+  AInvert: Boolean);
 begin
-  DisplayImage(AFileName, DetectProtocol, AMaxWidth);
+  DisplayImage(AFileName, DetectProtocol, AMaxWidth, AInvert);
 end;
 
 end.

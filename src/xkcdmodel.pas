@@ -30,6 +30,7 @@ type
     Width: Integer;              // -1 = fit terminal
     CacheFilename: string;       // '' = use default
     NoCache: Boolean;
+    Invert: Boolean;
   end;
 
   EXkcdError = class(Exception);

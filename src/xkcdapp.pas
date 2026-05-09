@@ -54,6 +54,7 @@ begin
   LCachePath := CachePath(AOptions.CacheFilename);
   ForceDirectories(ExtractFileDir(LCachePath));
   ForceDirectories(ExtractFileDir(ComicImageCachePath(0)));
+  ForceDirectories(ExtractFileDir(ComicDetailCachePath(0)));
 
   if AOptions.SubCommand = 'update-cache' then
   begin
@@ -84,7 +85,11 @@ begin
   else
     LMeta := LCache.Comics[0];
 
-  ParseComicPage(FetchComicHtml(LMeta.ID), LImgSrc, LSubText);
+  if not LoadComicDetail(LMeta.ID, LImgSrc, LSubText) then
+  begin
+    ParseComicPage(FetchComicHtml(LMeta.ID), LImgSrc, LSubText);
+    SaveComicDetail(LMeta.ID, LImgSrc, LSubText);
+  end;
 
   Writeln(Format('#%d: %s', [LMeta.ID, LMeta.Title]));
   Writeln(LSubText);
@@ -100,7 +105,7 @@ begin
   begin
     LWidth := AOptions.Width;
     if LWidth <= 0 then LWidth := 800;
-    AutoDisplayImage(LImgCachePath, LWidth);
+    AutoDisplayImage(LImgCachePath, LWidth, AOptions.Invert);
   end;
 end;
 

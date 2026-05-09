@@ -9,7 +9,8 @@ type
     R, G, B: Byte;
   end;
 
-procedure DisplayImageAsSixel(const AFileName: string; AMaxWidth: Integer = 800);
+procedure DisplayImageAsSixel(const AFileName: string; AMaxWidth: Integer = 800;
+  AInvert: Boolean = False);
 function MakeQuantKey(const AR, AG, AB: Byte): Word;
 function ColorDist(const AA, AB: TRGBColor): Int64;
 
@@ -43,7 +44,8 @@ begin
   Result := Int64(LDR) * LDR + Int64(LDG) * LDG + Int64(LDB) * LDB;
 end;
 
-procedure DisplayImageAsSixel(const AFileName: string; AMaxWidth: Integer = 800);
+procedure DisplayImageAsSixel(const AFileName: string; AMaxWidth: Integer;
+  AInvert: Boolean);
 const
   CMAX_COLORS = 256;
 var
@@ -74,6 +76,7 @@ var
   LFirstColor: Boolean;
   LPair: TPair<Word, TColorBucket>;
   LInfo: TSkImageInfo;
+  LPaint: ISkPaint;
 begin
   LSrcImage := TSkImage.MakeFromEncodedFile(AFileName);
   if LSrcImage = nil then
@@ -100,10 +103,16 @@ begin
   if LSurface = nil then
     raise Exception.Create('Cannot create raster surface');
 
+  if AInvert then
+  begin
+    LPaint := TSkPaint.Create;
+    LPaint.ColorFilter := TSkColorFilter.MakeMatrix(
+      TSkColorMatrix.Create(-1,0,0,0,1, 0,-1,0,0,1, 0,0,-1,0,1, 0,0,0,1,0));
+  end;
   LSurface.Canvas.Clear($FFFFFFFF);
   LSurface.Canvas.DrawImageRect(LSrcImage,
     TRectF.Create(0, 0, LW, LH),
-    TSkSamplingOptions.High);
+    TSkSamplingOptions.High, LPaint);
 
   // Read BGRA8888 pixels (stored as $AARRGGBB Cardinal in little-endian)
   LRowBytes := NativeUInt(LW) * SizeOf(Cardinal);

@@ -5,7 +5,8 @@ interface
 uses System.SysUtils;
 
 function EncodeImageAsITerm(const APngBytes: TBytes): string;
-procedure DisplayImageAsITerm(const AFileName: string; AMaxWidth: Integer = 800);
+procedure DisplayImageAsITerm(const AFileName: string; AMaxWidth: Integer = 800;
+  AInvert: Boolean = False);
 
 implementation
 
@@ -35,13 +36,15 @@ begin
             Base64NoBr(APngBytes) + #7;
 end;
 
-procedure DisplayImageAsITerm(const AFileName: string; AMaxWidth: Integer);
+procedure DisplayImageAsITerm(const AFileName: string; AMaxWidth: Integer;
+  AInvert: Boolean);
 var
   LSrc: ISkImage;
   LSurface: ISkSurface;
   LSrcW, LSrcH, LW, LH: Integer;
   LInfo: TSkImageInfo;
   LPngBytes: TBytes;
+  LPaint: ISkPaint;
 begin
   LSrc := TSkImage.MakeFromEncodedFile(AFileName);
   if not Assigned(LSrc) then
@@ -58,10 +61,16 @@ begin
     LW := LSrcW;
     LH := LSrcH;
   end;
+  if AInvert then
+  begin
+    LPaint := TSkPaint.Create;
+    LPaint.ColorFilter := TSkColorFilter.MakeMatrix(
+      TSkColorMatrix.Create(-1,0,0,0,1, 0,-1,0,0,1, 0,0,-1,0,1, 0,0,0,1,0));
+  end;
   LInfo    := TSkImageInfo.Create(LW, LH, TSkColorType.BGRA8888, TSkAlphaType.Opaque);
   LSurface := TSkSurface.MakeRaster(LInfo);
   LSurface.Canvas.Clear($FFFFFFFF);
-  LSurface.Canvas.DrawImageRect(LSrc, TRectF.Create(0, 0, LW, LH), TSkSamplingOptions.High);
+  LSurface.Canvas.DrawImageRect(LSrc, TRectF.Create(0, 0, LW, LH), TSkSamplingOptions.High, LPaint);
   LPngBytes := LSurface.MakeImageSnapshot.Encode(TSkEncodedImageFormat.PNG, 100);
   Write(EncodeImageAsITerm(LPngBytes));
   Flush(Output);

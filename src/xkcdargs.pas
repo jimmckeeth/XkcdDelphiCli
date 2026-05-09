@@ -22,9 +22,14 @@ begin
   Result.Width              := -1;
   Result.CacheFilename      := '';
   Result.NoCache            := False;
+  Result.Invert             := True;
 
   if Length(AArgs) = 0 then
-    raise EXkcdArgError.Create('Usage: xkcd <show|update-cache> [options]');
+  begin
+    Result.SubCommand := 'show';
+    Result.ShowLatest := True;
+    Exit;
+  end;
 
   Result.SubCommand := LowerCase(AArgs[0]);
   if (Result.SubCommand <> 'show') and (Result.SubCommand <> 'update-cache') then
@@ -40,6 +45,8 @@ begin
       Result.NoTerminalGraphics := True
     else if LArg = '--no-cache' then
       Result.NoCache := True
+    else if LArg = '--no-invert' then
+      Result.Invert := False
     else if LArg = '--comic-id' then
     begin
       Inc(I);

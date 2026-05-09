@@ -27,7 +27,11 @@ type
     [Test]
     procedure MissingComicIdValueRaisesArgError;
     [Test]
-    procedure NoArgsRaisesArgError;
+    procedure NoArgsDefaultsToShowLatest;
+    [Test]
+    procedure InvertDefaultsToTrue;
+    [Test]
+    procedure NoInvertFlagDisablesInvert;
   end;
 
 implementation
@@ -108,11 +112,29 @@ begin
     EXkcdArgError);
 end;
 
-procedure TTestXkcdArgs.NoArgsRaisesArgError;
+procedure TTestXkcdArgs.NoArgsDefaultsToShowLatest;
+var
+  LOptions: TXkcdOptions;
 begin
-  Assert.WillRaise(
-    procedure begin ParseArgs([]); end,
-    EXkcdArgError);
+  LOptions := ParseArgs([]);
+  Assert.AreEqual('show', LOptions.SubCommand);
+  Assert.IsTrue(LOptions.ShowLatest);
+end;
+
+procedure TTestXkcdArgs.InvertDefaultsToTrue;
+var
+  LOptions: TXkcdOptions;
+begin
+  LOptions := ParseArgs(['show', '--latest']);
+  Assert.IsTrue(LOptions.Invert);
+end;
+
+procedure TTestXkcdArgs.NoInvertFlagDisablesInvert;
+var
+  LOptions: TXkcdOptions;
+begin
+  LOptions := ParseArgs(['show', '--latest', '--no-invert']);
+  Assert.IsFalse(LOptions.Invert);
 end;
 
 initialization
