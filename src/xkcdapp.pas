@@ -1,4 +1,4 @@
-// Copyright © 2026 by James McKeeth - Licensed GPL 3.0
+// Copyright ï¿½ 2026 by James McKeeth - Licensed GPL 3.0
 // https://github.com/jimmckeeth/XkcdDelphiCli
 unit xkcdapp;
 
@@ -6,7 +6,7 @@ interface
 
 uses xkcdmodel;
 
-procedure Run(const AOptions: TXkcdOptions);
+function Run(const AOptions: TXkcdOptions): Integer;
 
 implementation
 
@@ -71,7 +71,7 @@ begin
   raise EXkcdError.CreateFmt('Comic #%d not found in cache', [AID]);
 end;
 
-procedure Run(const AOptions: TXkcdOptions);
+function Run(const AOptions: TXkcdOptions): Integer;
 var
   LCachePath: string;
   LCacheDir: string;
@@ -81,6 +81,7 @@ var
   LImgCachePath: string;
   LWidth: Integer;
 begin
+  Result := 0;
   LCachePath := CachePath(AOptions.CacheFilename);
   LCacheDir  := ExtractFileDir(LCachePath);
   ForceDirectories(LCacheDir);
@@ -123,6 +124,8 @@ begin
   end
   else
     LMeta := LCache.Comics[0];
+
+  Result := LMeta.ID;
 
   if not LoadComicDetail(LMeta.ID, LImgSrc, LSubText) then
   begin

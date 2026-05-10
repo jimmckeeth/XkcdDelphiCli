@@ -7,8 +7,7 @@ program iterm2demo;
 
 {$APPTYPE CONSOLE}
 
-{$R *.res}
-{$R *.dres}
+{$R *.dres 'XkcdDelphiCli.rc'}
 
 uses
   {$IFDEF MSWINDOWS}
@@ -22,8 +21,6 @@ uses
   termdetectapi in 'termdetectapi.pas',
   iterm2api in 'iterm2api.pas',
   termimageapi in 'termimageapi.pas';
-
-  {$R 'XkcdDelphiCli.res' 'XkcdDelphiCli.rc'}
 
   {$IFDEF MSWINDOWS}
 

@@ -4,7 +4,7 @@ program kittydemo;
 
 {$APPTYPE CONSOLE}
 
-{$R *.res}
+{$R *.dres 'XkcdDelphiCli.rc'}
 
 uses
   {$IFDEF MSWINDOWS}
@@ -18,8 +18,6 @@ uses
   termdetectapi in 'termdetectapi.pas',
   kittieapi in 'kittieapi.pas',
   termimageapi in 'termimageapi.pas';
-
-{$R 'XkcdDelphiCli.res' 'XkcdDelphiCli.rc'}
 
 {$IFDEF MSWINDOWS}
 

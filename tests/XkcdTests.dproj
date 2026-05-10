@@ -65,6 +65,7 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
         <SanitizedProjectName>XkcdTests</SanitizedProjectName>
+        <BRCC_CompilerToUse>rc</BRCC_CompilerToUse>
         <DCC_DcuOutput>..\lib\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_Define>SKIA;$(DCC_Define)</DCC_Define>
         <DCC_ExeOutput>..\bin\$(Platform)\$(Config)</DCC_ExeOutput>
@@ -137,6 +138,10 @@
         <DCCReference Include="testKittieApi.pas"/>
         <DCCReference Include="testItermApi.pas"/>
         <DCCReference Include="testSvgRendering.pas"/>
+        <RcItem Include="XkcdDelphiCli.svg">
+            <ResourceType>RCDATA</ResourceType>
+            <ResourceId>XkcdDelphiCli</ResourceId>
+        </RcItem>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

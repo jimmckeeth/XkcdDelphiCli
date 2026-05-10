@@ -6,6 +6,7 @@ program XkcdTests;
 {$APPTYPE CONSOLE}
 {$ENDIF}
 {$STRONGLINKTYPES ON}
+
 uses
   System.SysUtils,
   {$IFDEF TESTINSIGHT}
@@ -26,7 +27,7 @@ uses
   testItermApi in 'testItermApi.pas',
   testSvgRendering in 'testSvgRendering.pas';
 
-{$R 'XkcdDelphiCli.res' 'XkcdDelphiCli.rc'}
+{$R *.dres 'XkcdDelphiCli.rc'}
 
 { keep comment here to protect the following conditional from being removed by the IDE when adding a unit }
 {$IFNDEF TESTINSIGHT}

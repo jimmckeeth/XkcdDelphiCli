@@ -1,22 +1,22 @@
-// Copyright 2026 © James McKeeth - Licensed GPL 3.0
+ï»¿// Copyright 2026 ï¿½ James McKeeth - Licensed GPL 3.0
 // https://github.com/jimmckeeth/XkcdDelphiCli
 program xkcd;
 
 {$APPTYPE CONSOLE}
 
-{$R *.res}
+{$R *.dres}
 
 uses
   {$IFDEF MSWINDOWS}
   Winapi.Windows,
-  {$ENDIF}
+  {$ENDIF }
   {$IFDEF LINUX}
   LinuxLibStdCxx in 'LinuxLibStdCxx.pas',
-  {$ENDIF}
+  {$ENDIF }
   System.SysUtils,
-  xkcdmodel  in 'xkcdmodel.pas',
-  xkcdargs   in 'xkcdargs.pas',
-  xkcdapp    in 'xkcdapp.pas';
+  xkcdmodel in 'xkcdmodel.pas',
+  xkcdargs in 'xkcdargs.pas',
+  xkcdapp in 'xkcdapp.pas';
 
 {$IFDEF MSWINDOWS}
 procedure EnableVTProcessing;
@@ -36,7 +36,7 @@ var
 
 begin
   Writeln('XKCD Delphi CLI');
-  Writeln('Copyright 2026 © James McKeeth - Licensed GPL 3.0');
+  Writeln('Copyright 2026 ï¿½ James McKeeth - Licensed GPL 3.0');
   Writeln('https://github.com/jimmckeeth/XkcdDelphiCli');
 
   try
@@ -49,7 +49,9 @@ begin
       LArgs[I - 1] := ParamStr(I);
 
     LOptions := ParseArgs(LArgs);
-    Run(LOptions);
+    var LComicID := Run(LOptions);
+    if LComicID > 0 then
+      Writeln('https://xkcd.com/' + LComicID.ToString + '/');
   except
     on E: EXkcdArgError do
     begin
