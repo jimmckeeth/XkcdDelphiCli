@@ -1,3 +1,5 @@
+// Copyright (c) 2026 James McKeeth - Licensed GPL 3.0
+// https://github.com/jimmckeeth/XkcdDelphiCli
 program XkcdTests;
 
 {$IFNDEF TESTINSIGHT}
@@ -21,7 +23,10 @@ uses
   testXkcdHttp in 'testXkcdHttp.pas',
   testTermDetect in 'testTermDetect.pas',
   testKittieApi in 'testKittieApi.pas',
-  testItermApi in 'testItermApi.pas';
+  testItermApi in 'testItermApi.pas',
+  testSvgRendering in 'testSvgRendering.pas';
+
+{$R 'XkcdDelphiCli.res' 'XkcdDelphiCli.rc'}
 
 { keep comment here to protect the following conditional from being removed by the IDE when adding a unit }
 {$IFNDEF TESTINSIGHT}

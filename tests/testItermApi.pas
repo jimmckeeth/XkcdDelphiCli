@@ -1,3 +1,5 @@
+// Copyright © 2026 by James McKeeth - Licensed GPL 3.0
+// https://github.com/jimmckeeth/XkcdDelphiCli
 unit testItermApi;
 
 interface

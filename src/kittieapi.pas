@@ -1,4 +1,9 @@
+// Copyright © 2026 by James McKeeth - Licensed GPL 3.0
+// https://github.com/jimmckeeth/XkcdDelphiCli
 unit kittieapi;
+
+// Kitty terminal graphics protocol
+// https://sw.kovidgoyal.net/kitty/graphics-protocol/
 
 interface
 

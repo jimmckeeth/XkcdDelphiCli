@@ -1,3 +1,5 @@
+﻿// Copyright (c) 2026 James McKeeth - Licensed GPL 3.0
+// https://github.com/jimmckeeth/XkcdDelphiCli
 program kittydemo;
 
 {$APPTYPE CONSOLE}
@@ -12,40 +14,57 @@ uses
   LinuxLibStdCxx in 'LinuxLibStdCxx.pas',
   {$ENDIF }
   System.SysUtils,
-  kittieapi in 'kittieapi.pas';
+  System.IOUtils,
+  termdetectapi in 'termdetectapi.pas',
+  kittieapi in 'kittieapi.pas',
+  termimageapi in 'termimageapi.pas';
+
+{$R 'XkcdDelphiCli.res' 'XkcdDelphiCli.rc'}
 
 {$IFDEF MSWINDOWS}
-procedure EnableVTProcessing;
-var
+
+  procedure EnableVTProcessing;
+  var
   LHandle: THandle;
   LMode: DWORD;
-begin
+  begin
   LHandle := GetStdHandle(STD_OUTPUT_HANDLE);
   if GetConsoleMode(LHandle, LMode) then
     SetConsoleMode(LHandle, LMode or ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-end;
-{$ENDIF}
+  end;
+  {$ENDIF}
 
-var
+  var
   LImagePath: string;
 
-begin
+  begin
+  Writeln('Delphi Kitty Terminal Image Sample');
+  Writeln('Copyright 2026 © James McKeeth - Licensed GPL 3.0');
+  Writeln('https://github.com/jimmckeeth/XkcdDelphiCli');
+
   try
-{$IFDEF MSWINDOWS}
+  {$IFDEF MSWINDOWS}
     EnableVTProcessing;
-{$ENDIF}
+  {$ENDIF}
 
     if ParamCount > 0 then
-      LImagePath := ParamStr(1)
+    begin
+      LImagePath := ParamStr(1);
+      if not FileExists(LImagePath) then
+        raise Exception.CreateFmt('Image not found: %s', [LImagePath]);
+      DisplayImageAsKitty(LImagePath);
+    end
     else
+    begin
       LImagePath := ExtractFilePath(ParamStr(0)) + 'XkcdDelphiCli.webp';
-
-    if not FileExists(LImagePath) then
-      raise Exception.CreateFmt('Image not found: %s', [LImagePath]);
-
-    DisplayImageAsKitty(LImagePath);
+      if FileExists(LImagePath) then
+        DisplayImageAsKitty(LImagePath)
+      else
+        DisplaySvgResource('XkcdDelphiCli', tpKitty);
+    end;
   except
     on E: Exception do
       Writeln(ErrOutput, E.ClassName, ': ', E.Message);
   end;
-end.
+  end.
+

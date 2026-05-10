@@ -1,3 +1,5 @@
+﻿// Copyright � 2026 by James McKeeth - Licensed GPL 3.0
+// https://github.com/jimmckeeth/XkcdDelphiCli
 unit termimageapi;
 
 interface
@@ -6,6 +8,9 @@ uses termdetectapi;
 
 procedure DisplayImage(const AFileName: string;
   AProtocol: TTerminalProtocol; AMaxWidth: Integer = 800; AInvert: Boolean = False);
+
+procedure DisplaySvgResource(const AResourceName: string;
+  AProtocol: TTerminalProtocol; AMaxWidth: Integer = 800);
 
 procedure AutoDisplayImage(const AFileName: string; AMaxWidth: Integer = 800;
   AInvert: Boolean = False);
@@ -16,12 +21,14 @@ implementation
 
 uses
   System.SysUtils,
+  System.Classes,
   System.IOUtils,
   System.Types,
+  System.UITypes,
   System.Skia,
   sixelapi,
   kittieapi,
-  itermapi
+  iterm2api
   {$IFDEF MSWINDOWS}
   , Winapi.ShellAPI, Winapi.Windows
   {$ELSE}
@@ -53,6 +60,76 @@ procedure AutoDisplayImage(const AFileName: string; AMaxWidth: Integer;
   AInvert: Boolean);
 begin
   DisplayImage(AFileName, DetectProtocol, AMaxWidth, AInvert);
+end;
+
+procedure DisplaySvgResource(const AResourceName: string;
+  AProtocol: TTerminalProtocol; AMaxWidth: Integer);
+var
+  LResStream: TResourceStream;
+  LSvg: ISkSVGDOM;
+  LSurface: ISkSurface;
+  LTempFile: string;
+  LData: TBytes;
+  LSvgText: string;
+  LBytes: TBytes;
+  LResName: string;
+  LBgColor: TTerminalRGB;
+  LSkBgColor: TAlphaColor;
+  LSvgFile: string;
+begin
+  LResName := AResourceName.ToUpper;
+  LSvgText := '';
+  
+  // Try resource first
+  try
+    LResStream := TResourceStream.Create(HInstance, LResName, RT_RCDATA);
+    try
+      if LResStream.Size > 0 then
+      begin
+        SetLength(LBytes, LResStream.Size);
+        LResStream.ReadBuffer(LBytes[0], LResStream.Size);
+        LSvgText := TEncoding.UTF8.GetString(LBytes);
+      end;
+    finally
+      LResStream.Free;
+    end;
+  except
+    // Fallback to disk file if resource fails
+    LSvgFile := TPath.Combine(ExtractFilePath(ParamStr(0)), AResourceName + '.svg');
+    if TFile.Exists(LSvgFile) then
+      LSvgText := TFile.ReadAllText(LSvgFile);
+  end;
+
+  if LSvgText = '' then
+    raise Exception.CreateFmt('SVG source not found (resource "%s" or file)', [LResName]);
+
+  LSvg := TSkSVGDOM.Make(LSvgText);
+  if not Assigned(LSvg) then
+    raise Exception.CreateFmt('Cannot parse SVG source: %s', [LResName]);
+
+  // Match terminal background
+  LBgColor := QueryBackgroundColor;
+  if (LBgColor.R = 0) and (LBgColor.G = 0) and (LBgColor.B = 0) then
+  begin
+    if IsDarkBackground then
+      LSkBgColor := TAlphaColors.Black
+    else
+      LSkBgColor := TAlphaColors.White;
+  end
+  else
+    LSkBgColor := (255 shl 24) or (LBgColor.R shl 16) or (LBgColor.G shl 8) or LBgColor.B;
+
+  // Render SVG
+  LSurface := TSkSurface.MakeRaster(680, 200);
+  LSurface.Canvas.Clear(LSkBgColor);
+  LSvg.SetContainerSize(TSizeF.Create(680, 200));
+  LSvg.Render(LSurface.Canvas);
+
+  LData := LSurface.MakeImageSnapshot.Encode(TSkEncodedImageFormat.PNG, 100);
+  LTempFile := TPath.Combine(TPath.GetTempPath, LResName + '.png');
+  TFile.WriteAllBytes(LTempFile, LData);
+
+  DisplayImage(LTempFile, AProtocol, AMaxWidth);
 end;
 
 procedure SaveInvertedImage(const ASrcPath, ADstPath: string);

@@ -1,10 +1,14 @@
 ﻿// Copyright © 2026 by James McKeeth - Licensed GPL 3.0
 // https://github.com/jimmckeeth/XkcdDelphiCli
-program sixeldemo;
+program iterm2demo;
+
+// iTerm2 Inline Images Protocol
+// https://iterm2.com/documentation-images.html
 
 {$APPTYPE CONSOLE}
 
-{$R XkcdDelphiCli.res 'XkcdDelphiCli.rc'}
+{$R *.res}
+{$R *.dres}
 
 uses
   {$IFDEF MSWINDOWS}
@@ -16,10 +20,12 @@ uses
   System.SysUtils,
   System.IOUtils,
   termdetectapi in 'termdetectapi.pas',
-  sixelapi in 'sixelapi.pas',
+  iterm2api in 'iterm2api.pas',
   termimageapi in 'termimageapi.pas';
 
-{$IFDEF MSWINDOWS}
+  {$R 'XkcdDelphiCli.res' 'XkcdDelphiCli.rc'}
+
+  {$IFDEF MSWINDOWS}
 
   procedure EnableVTProcessing;
   var
@@ -36,7 +42,7 @@ uses
   LImagePath: string;
 
   begin
-  Writeln('Delphi Sixel Terminal Image Sample');
+  Writeln('Delphi iTerm2 Terminal Image Sample');
   Writeln('Copyright 2026 © James McKeeth - Licensed GPL 3.0');
   Writeln('https://github.com/jimmckeeth/XkcdDelphiCli');
 
@@ -50,15 +56,15 @@ uses
       LImagePath := ParamStr(1);
       if not FileExists(LImagePath) then
         raise Exception.CreateFmt('Image not found: %s', [LImagePath]);
-      DisplayImageAsSixel(LImagePath);
+      DisplayImageAsITerm(LImagePath);
     end
     else
     begin
-      LImagePath := ExtractFilePath(ParamStr(0)) + 'XkcdDelphiCli.webp';
+      LImagePath := ExtractFilePath(ParamStr(0))  + 'XkcdDelphiCli.webp';
       if FileExists(LImagePath) then
-        DisplayImageAsSixel(LImagePath)
+        DisplayImageAsITerm(LImagePath)
       else
-        DisplaySvgResource('XkcdDelphiCli', tpSixel);
+        DisplaySvgResource('XkcdDelphiCli', tpITerm);
     end;
   except
     on E: Exception do

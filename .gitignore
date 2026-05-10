@@ -83,3 +83,5 @@ modules/
 # CocoIndex Code (ccc)
 /.cocoindex_code/
 /__pycache__
+/bin
+*.res

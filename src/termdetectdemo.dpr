@@ -12,7 +12,11 @@ uses
   LinuxLibStdCxx in 'LinuxLibStdCxx.pas',
   {$ENDIF}
   System.SysUtils,
-  termdetectapi in 'termdetectapi.pas';
+  System.IOUtils,
+  termdetectapi in 'termdetectapi.pas',
+  termimageapi in 'termimageapi.pas';
+
+{$R 'XkcdDelphiCli.res' 'XkcdDelphiCli.rc'}
 
 {$IFDEF MSWINDOWS}
 procedure EnableVTProcessing;
@@ -30,6 +34,9 @@ const
   CProtocolName: array[TTerminalProtocol] of string = (
     'None', 'Sixel', 'Kitty', 'Kitty+', 'iTerm');
 
+var
+  LImagePath: string;
+
 begin
   try
     {$IFDEF MSWINDOWS}
@@ -45,6 +52,25 @@ begin
     var LColor := QueryBackgroundColor;
     Writeln(Format('Bg color : rgb(%d, %d, %d)', [LColor.R, LColor.G, LColor.B]));
     Writeln('Dark bg  : ', BoolToStr(IsDarkBackground, True));
+
+    Writeln;
+    if ParamCount > 0 then
+    begin
+      LImagePath := ParamStr(1);
+      if FileExists(LImagePath) then
+        AutoDisplayImage(LImagePath)
+      else
+        Writeln('Image not found: ', LImagePath);
+    end
+    else
+    begin
+      LImagePath := ExtractFilePath(ParamStr(0)) + 'XkcdDelphiCli.webp';
+      if FileExists(LImagePath) then
+        AutoDisplayImage(LImagePath)
+      else
+        DisplaySvgResource('XkcdDelphiCli', DetectProtocol);
+    end;
+
   except
     on E: Exception do
       Writeln(ErrOutput, E.ClassName, ': ', E.Message);

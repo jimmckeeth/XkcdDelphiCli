@@ -136,6 +136,7 @@
         <DCCReference Include="testTermDetect.pas"/>
         <DCCReference Include="testKittieApi.pas"/>
         <DCCReference Include="testItermApi.pas"/>
+        <DCCReference Include="testSvgRendering.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

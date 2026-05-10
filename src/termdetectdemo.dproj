@@ -60,6 +60,7 @@
     <PropertyGroup Condition="'$(Base)'!=''">
         <SanitizedProjectName>termdetectdemo</SanitizedProjectName>
         <DCC_DcuOutput>..\lib\$(Platform)\$(Config)</DCC_DcuOutput>
+        <DCC_Define>SKIA;$(DCC_Define)</DCC_Define>
         <DCC_ExeOutput>..\bin\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
     </PropertyGroup>
@@ -117,6 +118,7 @@
         </DelphiCompile>
         <DCCReference Include="LinuxLibStdCxx.pas"/>
         <DCCReference Include="termdetectapi.pas"/>
+        <DCCReference Include="termimageapi.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
