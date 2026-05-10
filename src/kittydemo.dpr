@@ -37,7 +37,7 @@ uses
 
   begin
   Writeln('Delphi Kitty Terminal Image Sample');
-  Writeln('Copyright 2026 © James McKeeth - Licensed GPL 3.0');
+  Writeln('Copyright (c) 2026 James McKeeth - Licensed GPL 3.0');
   Writeln('https://github.com/jimmckeeth/XkcdDelphiCli');
 
   try

@@ -1,4 +1,4 @@
-﻿// Copyright © 2026 by James McKeeth - Licensed GPL 3.0
+﻿// Copyright (c) 2026 by James McKeeth - Licensed GPL 3.0
 // https://github.com/jimmckeeth/XkcdDelphiCli
 program iterm2demo;
 
@@ -40,7 +40,7 @@ uses
 
   begin
   Writeln('Delphi iTerm2 Terminal Image Sample');
-  Writeln('Copyright 2026 © James McKeeth - Licensed GPL 3.0');
+  Writeln('Copyright (c) 2026 James McKeeth - Licensed GPL 3.0');
   Writeln('https://github.com/jimmckeeth/XkcdDelphiCli');
 
   try

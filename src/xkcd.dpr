@@ -1,4 +1,4 @@
-﻿// Copyright 2026 � James McKeeth - Licensed GPL 3.0
+﻿// Copyright (c) 2026 James McKeeth - Licensed GPL 3.0
 // https://github.com/jimmckeeth/XkcdDelphiCli
 program xkcd;
 
@@ -36,7 +36,7 @@ var
 
 begin
   Writeln('XKCD Delphi CLI');
-  Writeln('Copyright 2026 � James McKeeth - Licensed GPL 3.0');
+  Writeln('Copyright (c) 2026 James McKeeth - Licensed GPL 3.0');
   Writeln('https://github.com/jimmckeeth/XkcdDelphiCli');
 
   try
