@@ -6,7 +6,7 @@ from cocoindex_code.chunking import Chunk, TextPosition
 
 # Path to the compiled tree-sitter-pascal library
 # We'll use the x64 version as we are on a 64-bit system.
-LIB_PATH = r"E:\Jim\Downloads\tree-sitter-pascal-windows-x64.dll"
+LIB_PATH = r"C:\Tools\ccc-plugins\tree-sitter-pascal-windows-x64.dll"
 
 # Load the grammar
 # In tree-sitter 0.21+, we use ctypes to get the function pointer and pass it to Language()

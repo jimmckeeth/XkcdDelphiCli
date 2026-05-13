@@ -127,7 +127,7 @@ begin
 
   Result := LMeta.ID;
 
-  if not LoadComicDetail(LMeta.ID, LImgSrc, LSubText) then
+  if AOptions.NoCache or not LoadComicDetail(LMeta.ID, LImgSrc, LSubText) then
   begin
     ParseComicPage(FetchComicHtml(LMeta.ID), LImgSrc, LSubText);
     SaveComicDetail(LMeta.ID, LImgSrc, LSubText);

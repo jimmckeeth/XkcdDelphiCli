@@ -30,6 +30,7 @@ This is a pure console application using the Delphi Run-Time Library (RTL) and S
 | JSON                         | `System.JSON` (RTL)                    | Built-in                                |
 | HTML parse                   | Custom Regex-based                     | Minimal structures, no library needed   |
 | Terminal I/O                 | Direct RTL + Platform API              | Low-level control needed for probes     |
+| Text encoding                | UTF-8 at HTTP/cache/console boundaries | Prevents mojibake in comic captions     |
 
 ### Skia4Delphi
 - Used for LANCZOS-quality resizing and pixel-level color inversion.
@@ -51,6 +52,10 @@ To read terminal responses (like pixel size or protocol probes) without waiting 
 - **Windows**: Uses `GetConsoleMode` / `SetConsoleMode` with `ENABLE_VIRTUAL_TERMINAL_INPUT`.
 - **Linux**: Uses `termios` API to disable `ICANON` and `ECHO`.
 
+### 3.3 Unicode Console Output
+
+Caption text is stored internally as Delphi `string`/UTF-16. On Windows, `xkcdconsole.ConfigureUnicodeConsole` sets console input/output code pages and Delphi `Text` code pages to UTF-8 before user-visible text is printed. This setup is separate from terminal graphics protocol detection so caption text output remains independent from image rendering.
+
 ---
 
 ## 4. Sixel Protocol Implementation
@@ -68,13 +73,18 @@ The application uses `System.RegularExpressions` to parse the two required struc
 - **Archive Page**: Extracts comic IDs, HRefs, and titles.
 - **Comic Page**: Extracts the image source URL and the subtext (alt-text).
 
+HTML responses are read as UTF-8. `HtmlDecode` decodes common named entities used in captions and titles, numeric decimal/hex entities, and full Unicode code points. Code points outside the Basic Multilingual Plane are emitted as valid UTF-16 surrogate pairs.
+
 ---
 
 ## 6. Cache System
 
 - **Metadata Cache**: A JSON file stored at `~/.cache/xkcd-cli/cache.json` containing the list of known comics.
-- **Image Cache**: (Future) Locally caches downloaded comic images to improve repeated viewing speed.
+- **Detail Cache**: JSON files under `~/.cache/xkcd-cli/detail/` containing per-comic image URL and decoded subtext/caption.
+- **Image Cache**: Downloaded comic images are cached under `~/.cache/xkcd-cli/images/`.
+- **Encoding**: Metadata and detail JSON are read and written as UTF-8.
 - **Staleness**: Cache is considered stale after 24 hours.
+- **Bypass**: `--no-cache` bypasses metadata and detail cache reads, refetches from xkcd.com, and rewrites the cache with decoded Unicode text.
 
 ---
 
@@ -94,7 +104,7 @@ The application follows a subcommand-based interface.
 - `--no-terminal-graphics`: Skip in-terminal rendering; opens in the default OS image viewer.
 - `--no-invert`: Suppress automatic color inversion on dark backgrounds.
 - `--cache-filename PATH`: Override the default cache location.
-- `--no-cache`: Skip the local cache and fetch directly from xkcd.com.
+- `--no-cache`: Skip metadata/detail cache reads and fetch fresh data from xkcd.com.
 
 ### Future Options:
 - `--no-terminal-scale-up`: Prevent upscaling smaller comics.
@@ -122,7 +132,7 @@ The application follows a subcommand-based interface.
 ### Phase 4: Polish & Interaction
 - `random` command.
 - Interactive selection via `fzf`.
-- Local image caching.
+- More cache hardening for corrupted JSON and permission failures.
 
 ---
 

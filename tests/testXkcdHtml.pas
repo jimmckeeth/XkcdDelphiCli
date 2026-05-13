@@ -1,4 +1,4 @@
-// Copyright © 2026 by James McKeeth - Licensed GPL 3.0
+// Copyright (c) 2026 by James McKeeth - Licensed GPL 3.0
 // https://github.com/jimmckeeth/XkcdDelphiCli
 unit testXkcdHtml;
 
@@ -30,6 +30,10 @@ type
     procedure HtmlDecodeHandlesNumericEntities;
     [Test]
     procedure HtmlDecodeHandlesHexEntities;
+    [Test]
+    procedure HtmlDecodeHandlesSupplementaryPlaneEntities;
+    [Test]
+    procedure HtmlDecodeHandlesCommonUnicodeNamedEntities;
   end;
 
 implementation
@@ -146,6 +150,23 @@ procedure TTestXkcdHtml.HtmlDecodeHandlesHexEntities;
 begin
   Assert.AreEqual('A', HtmlDecode('&#x41;'));
   Assert.AreEqual(#169, HtmlDecode('&#xA9;'));
+end;
+
+procedure TTestXkcdHtml.HtmlDecodeHandlesSupplementaryPlaneEntities;
+var
+  LSmile: string;
+begin
+  LSmile := string(WideChar($D83D)) + string(WideChar($DE00));
+  Assert.AreEqual(LSmile, HtmlDecode('&#x1F600;'));
+  Assert.AreEqual(LSmile, HtmlDecode('&#128512;'));
+end;
+
+procedure TTestXkcdHtml.HtmlDecodeHandlesCommonUnicodeNamedEntities;
+begin
+  Assert.AreEqual('that' + #$2019 + 's', HtmlDecode('that&rsquo;s'));
+  Assert.AreEqual(#$201C + 'quoted' + #$201D, HtmlDecode('&ldquo;quoted&rdquo;'));
+  Assert.AreEqual('wait' + #$2026, HtmlDecode('wait&hellip;'));
+  Assert.AreEqual('a' + #$00A0 + 'b', HtmlDecode('a&nbsp;b'));
 end;
 
 initialization

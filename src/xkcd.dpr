@@ -7,43 +7,27 @@ program xkcd;
 {$R *.dres}
 
 uses
-  {$IFDEF MSWINDOWS}
-  Winapi.Windows,
-  {$ENDIF }
   {$IFDEF LINUX}
   LinuxLibStdCxx in 'LinuxLibStdCxx.pas',
   {$ENDIF }
   System.SysUtils,
   xkcdmodel in 'xkcdmodel.pas',
   xkcdargs in 'xkcdargs.pas',
+  xkcdconsole in 'xkcdconsole.pas',
   xkcdapp in 'xkcdapp.pas';
-
-{$IFDEF MSWINDOWS}
-procedure EnableVTProcessing;
-var
-  LHandle: THandle;
-  LMode: DWORD;
-begin
-  LHandle := GetStdHandle(STD_OUTPUT_HANDLE);
-  if GetConsoleMode(LHandle, LMode) then
-    SetConsoleMode(LHandle, LMode or ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-end;
-{$ENDIF}
 
 var
   LArgs: TArray<string>;
   LOptions: TXkcdOptions;
 
 begin
+  ConfigureUnicodeConsole;
+
   Writeln('XKCD Delphi CLI');
   Writeln('Copyright (c) 2026 James McKeeth - Licensed GPL 3.0');
   Writeln('https://github.com/jimmckeeth/XkcdDelphiCli');
 
   try
-    {$IFDEF MSWINDOWS}
-    EnableVTProcessing;
-    {$ENDIF}
-
     SetLength(LArgs, ParamCount);
     for var I := 1 to ParamCount do
       LArgs[I - 1] := ParamStr(I);

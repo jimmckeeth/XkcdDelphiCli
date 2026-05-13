@@ -131,11 +131,13 @@
         <DCCReference Include="LinuxLibStdCxx.pas"/>
         <DCCReference Include="xkcdmodel.pas"/>
         <DCCReference Include="xkcdargs.pas"/>
+        <DCCReference Include="xkcdconsole.pas"/>
         <DCCReference Include="xkcdapp.pas"/>
         <RcItem Include="XkcdDelphiCli.svg">
             <ResourceType>RCDATA</ResourceType>
             <ResourceId>XkcdDelphiCli</ResourceId>
         </RcItem>
+        <None Include="..\agents.md"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

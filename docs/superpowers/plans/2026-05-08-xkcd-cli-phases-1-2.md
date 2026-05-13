@@ -4,9 +4,11 @@
 
 **Goal:** Build kitty/iTerm image encoding APIs, a terminal detection demo, and the xkcd CLI (HTTP + cache + HTML parse + image display) with full DUnitX test coverage.
 
+**Status note (updated 2026-05-13):** This is a historical implementation plan. The current codebase includes later fixes beyond the original checklist, including Unicode-aware caption handling. Current behavior is: HTTP responses are read as UTF-8, metadata/detail JSON caches are read and written as UTF-8, `HtmlDecode` supports common Unicode named entities plus decimal/hex numeric entities including non-BMP code points, and the Windows CLI configures UTF-8 console text output in `xkcdconsole`.
+
 **Architecture:** All logic lives in focused units (`xkcdmodel`, `xkcdhtml`, `xkcdcache`, `xkcdargs`, `xkcdhttp`, `xkcdapp`, `termdetectapi`, `kittieapi`, `itermapi`, `termimageapi`). Every `.dpr` is a glue-only entry point with no business logic. One DUnitX test unit per feature unit. Terminal raw-mode I/O is isolated in `termdetectapi` behind parser helpers that are unit-testable without a real terminal.
 
-**Tech Stack:** Delphi 12 / BDS 37.0, System.Skia (image load/resize), System.Net.HttpClient (HTTP), System.JSON (cache), System.RegularExpressions (HTML parse), System.NetEncoding (base64), DUnitX (tests), Winapi.Windows + Posix.Termios (terminal I/O)
+**Tech Stack:** Delphi 12 / BDS 37.0, System.Skia (image load/resize), System.Net.HttpClient (HTTP), System.JSON (UTF-8 cache), System.RegularExpressions (HTML parse), Unicode-aware HTML entity decoding, System.NetEncoding (base64), DUnitX (tests), Winapi.Windows + Posix.Termios (terminal I/O)
 
 ---
 

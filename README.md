@@ -10,7 +10,8 @@ A high-performance, cross-platform native command-line tool for viewing [xkcd](h
 - **Terminal Graphics**: Native support for Sixel, Kitty, and ITerm2 image protocols.
 - **Smart Inversion**: Automatically inverts comic colors on dark terminal backgrounds (optional).
 - **Cross-Platform**: Built for Windows and Linux.
-- **Local Cache**: Caches comic metadata to reduce network overhead.
+- **Unicode Captions**: Decodes common HTML entities and full Unicode numeric code points, including non-BMP characters.
+- **Local Cache**: Caches comic metadata, comic detail captions, and downloaded images to reduce network overhead.
 
 ## Usage
 
@@ -44,7 +45,17 @@ xkcd update-cache
 | `--no-terminal-graphics` | Skip in-terminal rendering; opens in OS viewer. |
 | `--no-invert` | Suppress automatic color inversion on dark backgrounds. |
 | `--cache-filename PATH` | Override default cache location. |
-| `--no-cache` | Skip local cache and fetch directly from xkcd.com. |
+| `--no-cache` | Skip metadata/detail cache reads and fetch fresh data from xkcd.com. |
+
+## Unicode and Caching
+
+HTML is fetched and cached as UTF-8. Comic titles and captions are decoded from HTML entities before display, including smart punctuation (`&rsquo;`, `&ldquo;`, `&mdash;`, `&hellip;`) and numeric entities outside the Basic Multilingual Plane. On Windows, the CLI configures console input, output, and error streams for UTF-8 before printing captions.
+
+If an older cached caption was saved before Unicode handling was fixed, run with `--no-cache` to refetch the comic detail and overwrite the stale detail cache:
+
+```powershell
+xkcd show --comic-id 1234 --no-cache
+```
 
 ## Architecture
 

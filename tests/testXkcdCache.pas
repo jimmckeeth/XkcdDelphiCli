@@ -1,4 +1,4 @@
-// Copyright © 2026 by James McKeeth - Licensed GPL 3.0
+// Copyright (c) 2026 by James McKeeth - Licensed GPL 3.0
 // https://github.com/jimmckeeth/XkcdDelphiCli
 unit testXkcdCache;
 
@@ -28,6 +28,12 @@ type
     procedure IsStaleReturnsFalseAt23Hours;
     [Test]
     procedure SaveAndLoadRoundtrip;
+    [Test]
+    procedure SaveAndLoadRoundtripPreservesUnicodeTitle;
+    [Test]
+    procedure ComicDetailRoundtripPreservesUnicodeSubText;
+    [Test]
+    procedure SaveCacheAllowsFilenameWithoutDirectory;
     [Test]
     procedure CacheExistsReturnsFalseForMissingFile;
   end;
@@ -107,6 +113,59 @@ begin
   Assert.AreEqual('/3/', LLoaded.Comics[0].HRef);
   Assert.AreEqual('Forgot to Hit Send', LLoaded.Comics[0].Title);
   Assert.AreEqual(1, LLoaded.Comics[1].ID);
+end;
+
+procedure TTestXkcdCache.SaveAndLoadRoundtripPreservesUnicodeTitle;
+var
+  LOriginal, LLoaded: TXkcdCache;
+  LSmile: string;
+begin
+  LSmile := string(WideChar($D83D)) + string(WideChar($DE00));
+  LOriginal.LastUpdated := EncodeDateTime(2024, 1, 15, 12, 0, 0, 0);
+  SetLength(LOriginal.Comics, 1);
+  LOriginal.Comics[0].ID    := 314;
+  LOriginal.Comics[0].HRef  := '/314/';
+  LOriginal.Comics[0].Title := 'Unicode ' + #$201C + 'caption' + #$201D + ' ' + LSmile;
+
+  SaveCache(LOriginal, FTempFile);
+  LLoaded := LoadCache(FTempFile);
+
+  Assert.AreEqual(LOriginal.Comics[0].Title, LLoaded.Comics[0].Title);
+end;
+
+procedure TTestXkcdCache.ComicDetailRoundtripPreservesUnicodeSubText;
+var
+  LImgSrc, LSubText: string;
+  LSmile: string;
+begin
+  LSmile := string(WideChar($D83D)) + string(WideChar($DE00));
+  SaveComicDetail(999001, 'https://imgs.xkcd.com/comics/unicode.png',
+    'that' + #$2019 + 's ' + #$201C + 'quoted' + #$201D + ' ' + LSmile);
+  try
+    Assert.IsTrue(LoadComicDetail(999001, LImgSrc, LSubText));
+    Assert.AreEqual('https://imgs.xkcd.com/comics/unicode.png', LImgSrc);
+    Assert.AreEqual('that' + #$2019 + 's ' + #$201C + 'quoted' + #$201D + ' ' + LSmile, LSubText);
+  finally
+    TFile.Delete(ComicDetailCachePath(999001));
+  end;
+end;
+
+procedure TTestXkcdCache.SaveCacheAllowsFilenameWithoutDirectory;
+var
+  LOriginal: TXkcdCache;
+  LLocalFile: string;
+begin
+  LLocalFile := 'xkcd_test_cache_bare_filename.json';
+  LOriginal.LastUpdated := EncodeDateTime(2024, 1, 15, 12, 0, 0, 0);
+  SetLength(LOriginal.Comics, 0);
+
+  SaveCache(LOriginal, LLocalFile);
+  try
+    Assert.IsTrue(TFile.Exists(LLocalFile));
+  finally
+    if TFile.Exists(LLocalFile) then
+      TFile.Delete(LLocalFile);
+  end;
 end;
 
 procedure TTestXkcdCache.CacheExistsReturnsFalseForMissingFile;

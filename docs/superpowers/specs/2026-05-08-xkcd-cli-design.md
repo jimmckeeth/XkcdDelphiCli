@@ -42,6 +42,7 @@ testable behaviour lives in dedicated units that DUnitX can exercise directly.
 | `src/xkcdhttp.pas` | `FetchArchive`, `FetchComic`, `FetchImageBytes` |
 | `src/xkcdargs.pas` | Parses `argv` into `TXkcdOptions` record |
 | `src/xkcdapp.pas` | Orchestration: load cache → select comic → fetch → display |
+| `src/xkcdconsole.pas` | Windows UTF-8 console text setup and VT processing |
 | `src/xkcd.dpr` | Entry point only — parse args, call `Run(options)` |
 
 ### 2.4 Test units
@@ -52,8 +53,8 @@ testable behaviour lives in dedicated units that DUnitX can exercise directly.
 | `tests/testKittieApi.pas` | Unit | Base64 chunking, APC escape format |
 | `tests/testItermApi.pas` | Unit | OSC 1337 escape format |
 | `tests/testTermDetect.pas` | Unit | Response string parsing (not raw I/O) |
-| `tests/testXkcdHtml.pas` | Unit | `ParseArchive`, `ParseComicPage`, `HtmlDecode` with fixture HTML |
-| `tests/testXkcdCache.pas` | Unit | Cache write/read roundtrip, staleness, path construction |
+| `tests/testXkcdHtml.pas` | Unit | `ParseArchive`, `ParseComicPage`, Unicode-aware `HtmlDecode` with fixture HTML |
+| `tests/testXkcdCache.pas` | Unit | Cache write/read roundtrip, UTF-8 text preservation, staleness, path construction |
 | `tests/testXkcdArgs.pas` | Unit | Argument parsing for all flag combinations |
 | `tests/testXkcdHttp.pas` | Integration | `FetchArchive`, `FetchComic` against live xkcd.com |
 
@@ -230,7 +231,9 @@ Prefix `https:` to `//` URL.
 
 ### `HtmlDecode(const S: string): string`
 
-Handles `&amp;`, `&lt;`, `&gt;`, `&quot;`, `&#39;`, and numeric `&#N;` via regex loop.
+Handles the basic XML/HTML entities, common Unicode punctuation entities used in captions (`&rsquo;`, `&ldquo;`, `&mdash;`, `&hellip;`, etc.), decimal numeric entities, and hex numeric entities. Numeric entity decoding is Unicode-code-point aware: values above `$FFFF` are emitted as valid UTF-16 surrogate pairs instead of being truncated to a single `WideChar`.
+
+Numeric entities are decoded before named entities so escaped numeric text like `&amp;#65;` remains literal text after decoding.
 
 ---
 
@@ -252,6 +255,15 @@ function ComicImageCachePath(AComicID: Integer): string;
 
 Each comic image is saved to this path on first display; subsequent shows load from disk.
 
+### Detail cache path
+
+```pascal
+function ComicDetailCachePath(AComicID: Integer): string;
+// ~/.cache/xkcd-cli/detail/<id>.json
+```
+
+Each comic detail cache file stores the image URL and decoded subtext/caption. Detail JSON is read and written as UTF-8.
+
 ### Staleness
 
 ```pascal
@@ -265,6 +277,8 @@ Matches Python version exactly for cross-tool compatibility:
 ```json
 { "last_updated": "2024-01-15T12:00:00+00:00", "comics": [...] }
 ```
+
+Metadata and detail JSON must preserve Unicode text exactly across write/read roundtrips.
 
 ---
 
@@ -293,7 +307,7 @@ On HTTP error, raises `EXkcdHttpError` with status code in message.
    - ShowLatest → Comics[0]
    - ComicID set → find by ID (raise if not found)
    - default → Comics[0] (fzf deferred to Phase 4)
-5. FetchComicHtml → ParseComicPage → get ImgSrc, SubText
+5. FetchComicHtml → ParseComicPage → get ImgSrc, decoded Unicode SubText, and detail cache it
 6. Check image cache; if miss, FetchImageToFile to cache path
 7. Writeln(Title); Writeln(SubText)
 8. If NoTerminalGraphics: OS viewer open; else AutoDisplayImage(cached path)
@@ -312,6 +326,8 @@ xkcd update-cache [--cache-filename PATH]
 ```
 
 Returns `TXkcdOptions`. Prints usage and raises `EXkcdArgError` on invalid input.
+
+`--no-cache` bypasses metadata and detail cache reads so stale captions can be refetched and rewritten.
 
 ---
 
@@ -345,7 +361,7 @@ Each new `.dpr` gets a matching `.dproj` copied from `sixeldemo.dproj` with:
 | `testKittieApi` | Base64 chunk split at 4096, first frame has `m=1`, last has `m=0`, APC delimiters correct |
 | `testItermApi` | OSC frame starts with `ESC]1337;File=inline=1;`, ends with BEL, valid base64 |
 | `testTermDetect` | `ParseDA1Response` detects `;4;` and `4` edge cases; `ParseOSC11Response` handles 2- and 4-digit hex; `ParseTerminalSizeResponse` extracts px W×H |
-| `testXkcdHtml` | Archive parse returns correct IDs/titles from fixture; comic parse extracts img+subtext; `HtmlDecode` handles `&amp;` and `&#39;` |
-| `testXkcdCache` | Write+read roundtrip preserves all fields; stale at 25h, fresh at 23h; `CachePath` uses home dir |
+| `testXkcdHtml` | Archive parse returns correct IDs/titles from fixture; comic parse extracts img+subtext; `HtmlDecode` handles named entities, decimal/hex numeric entities, and non-BMP Unicode code points |
+| `testXkcdCache` | Write+read roundtrip preserves all fields and Unicode text; detail cache preserves Unicode captions; stale at 25h, fresh at 23h; `CachePath` uses home dir |
 | `testXkcdArgs` | `show --latest`, `show --comic-id 42`, `update-cache`, unknown flag raises error |
 | `testXkcdHttp` | (Integration) Archive returns >100 comics; comic 1 has known title "Barrel - Part 1" |

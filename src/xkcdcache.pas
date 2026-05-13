@@ -107,6 +107,7 @@ var
   LRoot: TJSONObject;
   LArr: TJSONArray;
   LObj: TJSONObject;
+  LDir: string;
 begin
   LRoot := TJSONObject.Create;
   try
@@ -122,7 +123,9 @@ begin
       LArr.Add(LObj);
     end;
     LRoot.AddPair('comics', LArr);
-    ForceDirectories(ExtractFileDir(APath));
+    LDir := ExtractFileDir(APath);
+    if LDir <> '' then
+      ForceDirectories(LDir);
     TFile.WriteAllText(APath, LRoot.ToJSON, TEncoding.UTF8);
   finally
     LRoot.Free;
