@@ -88,11 +88,13 @@ end;
 
 function UpdateExplainedCache(AConnection: TFDConnection;
   const AComics: TArray<TXkcdComicMeta>; AComicID: Integer;
-  AForceFetch: Boolean): Integer;
+  AForceFetch: Boolean; AIncludeExplanation, AIncludeTranscript: Boolean): Integer;
 var
   LTargets: TArray<TXkcdComicMeta>;
   LFailureCount: Integer;
   LSkippedExistingCount: Integer;
+  LExplanation: TXkcdExplanation;
+  LNeedsFetch: Boolean;
 begin
   Result := 0;
   LFailureCount := 0;
@@ -102,11 +104,23 @@ begin
   else
     LTargets := AComics;
 
-  Writeln(Format('Fetching Explain XKCD pages: %d comics', [Length(LTargets)]));
+  Writeln(Format('Checking Explain XKCD pages: %d comics', [Length(LTargets)]));
   for var I := 0 to High(LTargets) do
   begin
     try
-      if (not AForceFetch) and ExplanationExists(AConnection, LTargets[I].ID) then
+      LNeedsFetch := AForceFetch;
+      if not LNeedsFetch then
+      begin
+        if TryGetExplanation(AConnection, LTargets[I].ID, LExplanation) then
+        begin
+          LNeedsFetch := (AIncludeExplanation and (LExplanation.Explanation = '')) or
+                         (AIncludeTranscript and (LExplanation.Transcript = ''));
+        end
+        else
+          LNeedsFetch := True;
+      end;
+
+      if not LNeedsFetch then
       begin
         Inc(LSkippedExistingCount);
         Continue;
@@ -126,7 +140,7 @@ begin
     end;
 
     if ((I + 1) mod 25 = 0) or (I = High(LTargets)) then
-      Writeln(Format('Explain XKCD progress: %d/%d stored, %d existing, %d failed',
+      Writeln(Format('Explain XKCD progress: %d/%d fetched, %d skipped, %d failed',
         [Result, Length(LTargets), LSkippedExistingCount, LFailureCount]));
   end;
 end;
@@ -197,7 +211,7 @@ begin
     if AOptions.IncludeExplanation or AOptions.IncludeTranscript then
     begin
       var LExplainedCount := UpdateExplainedCache(LConnection, LCache.Comics,
-        AOptions.ComicID, AOptions.NoCache);
+        AOptions.ComicID, AOptions.NoCache, AOptions.IncludeExplanation, AOptions.IncludeTranscript);
       Writeln(Format('Explain XKCD updated: %d pages', [LExplainedCount]));
     end;
     Writeln(Format('Cache updated: %d comics', [Length(LCache.Comics)]));

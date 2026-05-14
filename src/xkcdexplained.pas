@@ -135,7 +135,7 @@ begin
     Result := Trim(Copy(Result, 1, LIndex - 1));
 end;
 
-function RemoveTranscriptFooter(const AText: string): string;
+function CleanExplainContent(const AText: string): string;
 begin
   Result := TrimFromMarker(AText, 'Add comment');
   Result := TrimFromMarker(Result, 'Create topic (use sparingly)');
@@ -152,8 +152,9 @@ function TryParseExplainPage(AComicID: Integer; const ATitle, AHtml: string;
 begin
   AExplanation.ComicID := AComicID;
   AExplanation.ExplainUrl := ExplainXkcdUrl(AComicID, ATitle);
-  AExplanation.Explanation := StripHtmlToText(ExtractSectionHtml(AHtml, 'Explanation'));
-  AExplanation.Transcript := RemoveTranscriptFooter(
+  AExplanation.Explanation := CleanExplainContent(
+    StripHtmlToText(ExtractSectionHtml(AHtml, 'Explanation')));
+  AExplanation.Transcript := CleanExplainContent(
     StripHtmlToText(ExtractSectionHtml(AHtml, 'Transcript')));
   Result := (AExplanation.Explanation <> '') or (AExplanation.Transcript <> '');
 end;
