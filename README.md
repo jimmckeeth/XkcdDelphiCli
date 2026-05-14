@@ -98,4 +98,4 @@ For detailed information on the project's internal structure, terminal protocol 
 
 ## License
 
-Distributed under the GNU General Public License v3.0. See `LICENSE` for more information.
+Distributed under the GNU General Public License v3.0. See [`LICENSE`](LICENSE) for more information.
