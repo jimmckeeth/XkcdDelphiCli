@@ -1,4 +1,4 @@
-// Copyright © 2026 by James McKeeth - Licensed GPL 3.0
+// Copyright (c) 2026 by James McKeeth - Licensed GPL 3.0
 // https://github.com/jimmckeeth/XkcdDelphiCli
 unit sixelapi;
 
@@ -25,7 +25,8 @@ uses
   System.Types,
   System.Generics.Collections,
   System.Generics.Defaults,
-  System.Math;
+  System.Math,
+  termimagecolor;
 
 type
   TColorBucket = record
@@ -80,7 +81,6 @@ var
   LFirstColor: Boolean;
   LPair: TPair<Word, TColorBucket>;
   LInfo: TSkImageInfo;
-  LPaint: ISkPaint;
 begin
   LSrcImage := TSkImage.MakeFromEncodedFile(AFileName);
   if LSrcImage = nil then
@@ -107,22 +107,19 @@ begin
   if LSurface = nil then
     raise Exception.Create('Cannot create raster surface');
 
-  if AInvert then
-  begin
-    LPaint := TSkPaint.Create;
-    LPaint.ColorFilter := TSkColorFilter.MakeMatrix(
-      TSkColorMatrix.Create(-1,0,0,0,1, 0,-1,0,0,1, 0,0,-1,0,1, 0,0,0,1,0));
-  end;
   LSurface.Canvas.Clear($FFFFFFFF);
   LSurface.Canvas.DrawImageRect(LSrcImage,
     TRectF.Create(0, 0, LW, LH),
-    TSkSamplingOptions.High, LPaint);
+    TSkSamplingOptions.High);
 
   // Read BGRA8888 pixels (stored as $AARRGGBB Cardinal in little-endian)
   LRowBytes := NativeUInt(LW) * SizeOf(Cardinal);
   SetLength(LPixelBuf, LH * LRowBytes);
   if not LSurface.ReadPixels(LInfo, @LPixelBuf[0], NativeUInt(LRowBytes)) then
     raise Exception.Create('Cannot read surface pixels');
+
+  if AInvert then
+    SelectiveInvertPixels(LPixelBuf, LW, LH, LRowBytes);
 
   // Pass 1: frequency analysis with 5-bit quantization per channel
   LFreqMap := TDictionary<Word, TColorBucket>.Create(32768);

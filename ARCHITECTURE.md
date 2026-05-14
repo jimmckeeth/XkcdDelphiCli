@@ -28,6 +28,7 @@ This is a pure console application using the Delphi Run-Time Library (RTL) and S
 | Image load / resize / invert | Skia4Delphi                            | Cross-platform, GPU-optional, no VCL    |
 | HTTP                         | `TNetHTTPClient` (RTL)                 | Built-in, cross-platform                |
 | JSON                         | `System.JSON` (RTL)                    | Built-in                                |
+| Local search                 | FireDAC + SQLite / FTS5                | Built-in Delphi database stack          |
 | HTML parse                   | Custom Regex-based                     | Minimal structures, no library needed   |
 | Terminal I/O                 | Direct RTL + Platform API              | Low-level control needed for probes     |
 | Text encoding                | UTF-8 at HTTP/cache/console boundaries | Prevents mojibake in comic captions     |
@@ -81,10 +82,17 @@ HTML responses are read as UTF-8. `HtmlDecode` decodes common named entities use
 
 - **Metadata Cache**: A JSON file stored at `~/.cache/xkcd-cli/cache.json` containing the list of known comics.
 - **Detail Cache**: JSON files under `~/.cache/xkcd-cli/detail/` containing per-comic image URL and decoded subtext/caption.
-- **Image Cache**: Downloaded comic images are cached under `~/.cache/xkcd-cli/images/`.
+- **Image Cache**: Downloaded comic images are cached under `~/.cache/xkcd-cli/images/` in original form only.
+- **SQLite Search DB**: A FireDAC SQLite database stored at `~/.cache/xkcd-cli/xkcd.sqlite` containing comic metadata, explanation/transcript rows, and an FTS5 search table.
 - **Encoding**: Metadata and detail JSON are read and written as UTF-8.
 - **Staleness**: Cache is considered stale after 24 hours.
 - **Bypass**: `--no-cache` bypasses metadata and detail cache reads, refetches from xkcd.com, and rewrites the cache with decoded Unicode text.
+
+`xkcddb` owns database path selection, FireDAC SQLite connection setup, schema initialization, upserts, and literal search. `update-cache` seeds the DB with archive metadata; viewing a comic enriches its row with image URL and decoded subtext. Explain XKCD transcript ingestion uses the same `explanations` table and search index.
+
+`xkcdexplained` parses Explain XKCD MediaWiki pages into transcript/explanation records and builds canonical MediaWiki page URLs from comic IDs and archive titles. `xkcdhttp.FetchExplainHtml` is the network boundary for those pages and retries transient 429/500/502/503/504 responses. `update-cache --explained` and `update-cache --transcript` incrementally fetch and store missing Explain XKCD rows; `--no-cache` forces a refresh/re-parse of existing rows. `update-cache --explained --comic-id N` refreshes or fills one page. `show --explained` and `show --transcript` display cached text when present and fetch/store that comic's Explain XKCD page when missing.
+
+Inversion is applied in the terminal protocol adapters at display time. `termimagecolor` selectively inverts neutral/grayscale pixels, which flips white backgrounds and black line art for dark terminals while leaving colored regions unchanged. The app does not cache inverted image files.
 
 ---
 
@@ -96,14 +104,18 @@ The application follows a subcommand-based interface.
 - `show`: Displays a comic.
 - `random`: Displays a random comic.
 - `update-cache`: Forces a refresh of the metadata cache.
+- `search`: Searches local SQLite data for literal text matches.
 
 ### Options:
 - `--latest`: Show the newest comic (default).
-- `--comic-id N`: Show a specific comic by number.
+- `--comic-id N`: Show or refresh a specific comic by number. `show N` is also accepted.
 - `--width N`: Target pixel width (-1 = fit terminal).
 - `--no-terminal-graphics`: Skip in-terminal rendering; opens in the default OS image viewer.
 - `--no-invert`: Suppress automatic color inversion on dark backgrounds.
+- `--explained`: With `show`, display Explain XKCD explanation text; with `update-cache`, fetch missing Explain XKCD rows.
+- `--transcript`: With `show`, display Explain XKCD transcript text; with `update-cache`, fetch missing Explain XKCD rows.
 - `--cache-filename PATH`: Override the default cache location.
+- `--db-filename PATH`: Override the default SQLite database location.
 - `--no-cache`: Skip metadata/detail cache reads and fetch fresh data from xkcd.com.
 
 ### Future Options:

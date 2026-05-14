@@ -1,4 +1,4 @@
-// Copyright © 2026 by James McKeeth - Licensed GPL 3.0
+// Copyright (c) 2026 by James McKeeth - Licensed GPL 3.0
 // https://github.com/jimmckeeth/XkcdDelphiCli
 unit testXkcdHttp;
 
@@ -16,6 +16,9 @@ type
     [Test]
     [Category('Integration')]
     procedure FetchComicOneHasKnownTitle;
+    [Test]
+    [Category('Integration')]
+    procedure FetchExplainPageReturnsHtml;
     [Test]
     [Category('Integration')]
     procedure FetchImageToFileCreatesFile;
@@ -46,6 +49,15 @@ begin
   LHtml := FetchComicHtml(1);
   ParseComicPage(LHtml, LImgSrc, LSubText);
   Assert.IsTrue(LImgSrc.Contains('barrel'), 'Comic 1 image should be barrel');
+end;
+
+procedure TTestXkcdHttp.FetchExplainPageReturnsHtml;
+var
+  LHtml: string;
+begin
+  LHtml := FetchExplainHtml(149);
+  Assert.IsTrue(LHtml.Contains('Explanation'), 'Explain page should contain an Explanation section');
+  Assert.IsTrue(LHtml.Contains('Transcript'), 'Explain page should contain a Transcript section');
 end;
 
 procedure TTestXkcdHttp.FetchImageToFileCreatesFile;

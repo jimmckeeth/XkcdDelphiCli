@@ -134,6 +134,10 @@
         <DCCReference Include="testXkcdCache.pas"/>
         <DCCReference Include="testXkcdArgs.pas"/>
         <DCCReference Include="testXkcdHttp.pas"/>
+        <DCCReference Include="testXkcdDb.pas"/>
+        <DCCReference Include="testXkcdExplained.pas"/>
+        <DCCReference Include="testXkcdConsole.pas"/>
+        <DCCReference Include="testTermImageColor.pas"/>
         <DCCReference Include="testTermDetect.pas"/>
         <DCCReference Include="testKittieApi.pas"/>
         <DCCReference Include="testItermApi.pas"/>

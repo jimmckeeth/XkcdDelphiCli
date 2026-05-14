@@ -19,6 +19,19 @@ type
     SubText: string;
   end;
 
+  TXkcdExplanation = record
+    ComicID: Integer;
+    ExplainUrl: string;
+    Transcript: string;
+    Explanation: string;
+  end;
+
+  TXkcdSearchResult = record
+    ComicID: Integer;
+    Title: string;
+    Snippet: string;
+  end;
+
   TXkcdCache = record
     LastUpdated: TDateTime;
     Comics: TArray<TXkcdComicMeta>;
@@ -31,6 +44,10 @@ type
     NoTerminalGraphics: Boolean;
     Width: Integer;              // -1 = fit terminal
     CacheFilename: string;       // '' = use default
+    DbFilename: string;          // '' = use default
+    SearchQuery: string;
+    IncludeExplanation: Boolean;
+    IncludeTranscript: Boolean;
     NoCache: Boolean;
     Invert: Boolean;
   end;

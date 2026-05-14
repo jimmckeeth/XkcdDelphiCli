@@ -40,9 +40,12 @@ begin
     on E: EXkcdArgError do
     begin
       Writeln(ErrOutput, 'Error: ', E.Message);
-      Writeln(ErrOutput, 'Usage: xkcd <show|update-cache|random> [options]');
+      Writeln(ErrOutput, 'Usage: xkcd <show|update-cache|random|search> [options]');
       Writeln(ErrOutput, 'Options:');
       Writeln(ErrOutput, '  --comic-id 149           To open a specific comic by ID');
+      Writeln(ErrOutput, '  --db-filename PATH       Override the SQLite search database path');
+      Writeln(ErrOutput, '  --explained              Show/cache Explain XKCD explanation text');
+      Writeln(ErrOutput, '  --transcript             Show/cache Explain XKCD transcript text');
       Writeln(ErrOutput, '  --no-terminal-graphics   Open the comic in the default image viewer');
       Writeln(ErrOutput, '                             Instead of displaying in the terminal.');
       Writeln(ErrOutput, '  --no-invert              Skip the invert if the background is dark.');

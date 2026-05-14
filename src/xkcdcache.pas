@@ -6,7 +6,6 @@ uses xkcdmodel;
 
 function CachePath(const AOverride: string = ''): string;
 function ComicImageCachePath(AComicID: Integer): string;
-function ComicImageInvertedCachePath(AComicID: Integer): string;
 function ComicDetailCachePath(AComicID: Integer): string;
 function IsStale(const ALastUpdated: TDateTime): Boolean;
 function CacheExists(const APath: string): Boolean;
@@ -39,14 +38,6 @@ begin
   Result := TPath.Combine(Result, 'xkcd-cli');
   Result := TPath.Combine(Result, 'images');
   Result := TPath.Combine(Result, AComicID.ToString + '.png');
-end;
-
-function ComicImageInvertedCachePath(AComicID: Integer): string;
-begin
-  Result := TPath.Combine(TPath.GetHomePath, '.cache');
-  Result := TPath.Combine(Result, 'xkcd-cli');
-  Result := TPath.Combine(Result, 'images');
-  Result := TPath.Combine(Result, AComicID.ToString + '_inv.png');
 end;
 
 function ComicDetailCachePath(AComicID: Integer): string;

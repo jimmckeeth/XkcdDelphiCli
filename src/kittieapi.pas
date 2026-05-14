@@ -1,4 +1,4 @@
-// Copyright © 2026 by James McKeeth - Licensed GPL 3.0
+// Copyright (c) 2026 by James McKeeth - Licensed GPL 3.0
 // https://github.com/jimmckeeth/XkcdDelphiCli
 unit kittieapi;
 
@@ -18,9 +18,9 @@ implementation
 uses
   System.NetEncoding,
   System.Math,
-  System.UITypes,
   System.Skia,
-  System.Types;
+  System.Types,
+  termimagecolor;
 
 function Base64NoBr(const AData: TBytes): string;
 var
@@ -83,7 +83,8 @@ var
   LSrcW, LSrcH, LW, LH: Integer;
   LInfo: TSkImageInfo;
   LPngBytes: TBytes;
-  LPaint: ISkPaint;
+  LRowBytes: Integer;
+  LPixelBuf: TArray<Byte>;
 begin
   LSrc := TSkImage.MakeFromEncodedFile(AFileName);
   if not Assigned(LSrc) then
@@ -102,18 +103,21 @@ begin
     LH := LSrcH;
   end;
 
-  if AInvert then
-  begin
-    LPaint := TSkPaint.Create;
-    LPaint.ColorFilter := TSkColorFilter.MakeMatrix(
-      TSkColorMatrix.Create(-1,0,0,0,1, 0,-1,0,0,1, 0,0,-1,0,1, 0,0,0,1,0));
-  end;
-
   LInfo    := TSkImageInfo.Create(LW, LH, TSkColorType.BGRA8888, TSkAlphaType.Opaque);
   LSurface := TSkSurface.MakeRaster(LInfo);
   LSurface.Canvas.Clear($FFFFFFFF);
   LSurface.Canvas.DrawImageRect(LSrc, TRectF.Create(0, 0, LW, LH),
-    TSkSamplingOptions.High, LPaint);
+    TSkSamplingOptions.High);
+
+  if AInvert then
+  begin
+    LRowBytes := NativeUInt(LW) * SizeOf(Cardinal);
+    SetLength(LPixelBuf, LH * LRowBytes);
+    if not LSurface.ReadPixels(LInfo, @LPixelBuf[0], NativeUInt(LRowBytes)) then
+      raise Exception.Create('Cannot read surface pixels');
+    SelectiveInvertPixels(LPixelBuf, LW, LH, LRowBytes);
+    LSurface.WritePixels(LInfo, @LPixelBuf[0], NativeUInt(LRowBytes));
+  end;
 
   LPngBytes := LSurface.MakeImageSnapshot.Encode(TSkEncodedImageFormat.PNG, 100);
 

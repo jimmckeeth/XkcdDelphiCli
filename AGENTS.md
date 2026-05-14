@@ -11,9 +11,8 @@ Who this serves:
 - Developers and power users who want fast terminal-based XKCD viewing, including graphical terminal protocols (Kitty, iTerm2 inline images, Sixel).
 
 Backend/system boundary:
-- No database.
 - Network boundary is HTTP to XKCD endpoints.
-- Persistence boundary is local filesystem cache under user cache path.
+- Persistence boundary is local filesystem cache under user cache path, including JSON/image files and a local SQLite search database.
 
 ## PROJECT VARIANTS
 Projects in the group:
@@ -47,6 +46,8 @@ High-level flow (main app):
    - `xkcdhttp`: HTTP fetch/download boundary.
    - `xkcdhtml`: parse archive/comic HTML and decode HTML entities into Unicode strings.
    - `xkcdcache`: UTF-8 JSON + file cache read/write/path/staleness.
+   - `xkcddb`: FireDAC SQLite connection/schema/upsert/search boundary.
+   - `xkcdexplained`: parse Explain XKCD transcript/explanation HTML.
    - `xkcdconsole`: console text encoding and VT setup.
    - `xkcdmodel`: shared records/options/exceptions.
 
@@ -54,6 +55,7 @@ Terminal rendering architecture:
 - `termdetectapi`: capability and environment detection.
 - Protocol adapters: `sixelapi`, `kittieapi`, `iterm2api`.
 - `termimageapi`: dispatcher/facade over detection + adapters + fallback viewer behavior.
+- `termimagecolor`: shared selective inversion logic for neutral/grayscale pixels.
 
 Design intent confirmed by developer:
 - Demo projects are part of architecture strategy for reusability and proof-of-concept validation.
@@ -74,6 +76,7 @@ For new code:
 ## THIRD-PARTY DEPENDENCIES
 Runtime/feature dependencies observed:
 - Skia (`System.Skia`) is actively used in terminal image pipeline and SVG rendering paths.
+- FireDAC SQLite is used for the local search database; keep SQL parameterized and Unicode-aware.
 - Terminal protocol implementations are custom code (Kitty/iTerm2/Sixel escape/protocol handling), not large external component suites.
 
 Testing/tooling dependencies:
@@ -81,7 +84,7 @@ Testing/tooling dependencies:
 - Optional TestInsight integration appears in test runner path.
 
 Not observed:
-- No FireDAC/BDE/ORM/database framework usage.
+- No BDE/ORM database framework usage.
 - No DevExpress/TMS/JVCL/FastReport-style UI component suites.
 
 ## RULES FOR AI AGENTS
@@ -90,7 +93,7 @@ Not observed:
 3. Preserve small, focused unit boundaries; avoid “god units”.
 4. Keep protocol adapters isolated (`sixelapi`, `kittieapi`, `iterm2api`); do not blend protocol internals into orchestration.
 5. Route cross-protocol display decisions through `termimageapi` (or equivalent dispatcher), not ad hoc call sites.
-6. Keep backend assumptions limited to HTTP + local cache files.
+6. Keep backend assumptions limited to HTTP + local cache files/SQLite.
 7. Mirror test naming and structure: one test unit per production concern where possible.
 8. Prefer deterministic unit tests for parsers/encoders; isolate live-network integration tests.
 9. Do not rename existing quirky identifiers (e.g., `kittieapi`) without explicit request.
@@ -102,7 +105,10 @@ When adding a feature:
 - Start from domain model/options (`xkcdmodel`, `xkcdargs`) if CLI behavior changes.
 - Extend orchestration in `xkcdapp` only after adding reusable lower-level capability.
 - For fetch/parse/cache changes, modify `xkcdhttp`/`xkcdhtml`/`xkcdcache` respectively, not all-in-one.
+- For local search/database changes, keep schema, connection, upserts, and search helpers in `xkcddb`.
+- For Explain XKCD ingestion, keep network fetches in `xkcdhttp`, parsing in `xkcdexplained`, and storage/search updates in `xkcddb`. The `--explained` flag means explanation text; `--transcript` means transcript text.
 - For terminal output changes, implement/adjust protocol unit and keep dispatch in `termimageapi`.
+- For image color/inversion changes, keep shared pixel classification in `termimagecolor` and avoid writing derived inverted cache files.
 - For user-visible text encoding changes, keep the boundary logic in `xkcdhtml`, `xkcdcache`, `xkcdhttp`, or `xkcdconsole` as appropriate.
 - Add or update tests in matching `tests/test*` unit.
 
@@ -110,6 +116,7 @@ Testing guidance:
 - Framework: DUnitX.
 - Existing coverage is good for args/cache/html and protocol parsing/encoding helpers.
 - Unicode regressions should be covered at both parser and cache boundaries: named entities, decimal/hex numeric entities, non-BMP code points, and UTF-8 JSON roundtrips.
+- SQLite/search regressions should cover schema idempotency, Unicode roundtrips, and literal search over title/caption/transcript/explanation fields.
 - Gaps worth prioritizing when touching behavior:
   - `xkcdapp` orchestration flow tests.
   - HTTP failure-path tests (timeouts/non-200/malformed content).
