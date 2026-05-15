@@ -120,7 +120,7 @@ The application follows a subcommand-based interface.
 
 ### Future Options:
 - `--no-terminal-scale-up`: Prevent upscaling smaller comics.
-- `--fzf-cmd PATH`: Custom path for the `fzf` binary for interactive selection.
+- `--picker`: Interactive selection menu using native SQLite data (replaces planned fzf integration).
 
 ---
 
@@ -143,8 +143,13 @@ The application follows a subcommand-based interface.
 
 ### Phase 4: Polish & Interaction
 - `random` command.
-- Interactive selection via `fzf`.
+- Interactive selection menu via native SQLite search.
 - More cache hardening for corrupted JSON and permission failures.
+
+### Phase 5: Superpowers (Planned)
+- Semantic search using vector embeddings.
+- Related comic discovery via FTS5/Vector similarity.
+- Built-in TUI for comic browsing.
 
 ---
 

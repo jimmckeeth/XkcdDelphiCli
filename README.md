@@ -2,8 +2,6 @@
 
 A high-performance, cross-platform native command-line tool for viewing [xkcd](https://xkcd.com/) comics directly in your terminal.
 
-![XkcdDelphiCli](XkcdDelphiCli.webp)
-
 ## Features
 
 - **Blazing Fast**: Starts in under 50ms.

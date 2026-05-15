@@ -30,6 +30,8 @@ type
     ComicID: Integer;
     Title: string;
     Snippet: string;
+    Transcript: string;
+    Explanation: string;
   end;
 
   TXkcdCache = record

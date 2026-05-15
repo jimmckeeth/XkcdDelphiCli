@@ -54,7 +54,7 @@ begin
       Result.NoCache := True
     else if LArg = '--no-invert' then
       Result.Invert := False
-    else if LArg = '--explained' then
+    else if (LArg = '--explained') or (LArg = '--explain') or (LArg = '--huh') then
       Result.IncludeExplanation := True
     else if LArg = '--transcript' then
       Result.IncludeTranscript := True

@@ -11,6 +11,7 @@ uses
   LinuxLibStdCxx in 'LinuxLibStdCxx.pas',
   {$ENDIF }
   System.SysUtils,
+  xkcdversion in 'xkcdversion.pas',
   xkcdmodel in 'xkcdmodel.pas',
   xkcdargs in 'xkcdargs.pas',
   xkcdconsole in 'xkcdconsole.pas',
@@ -20,10 +21,11 @@ var
   LArgs: TArray<string>;
   LOptions: TXkcdOptions;
 
+
 begin
   ConfigureUnicodeConsole;
 
-  Writeln('XKCD Delphi CLI');
+  Writeln('XKCD Delphi CLI - v' + CAppVersion);
   Writeln('Copyright (c) 2026 James McKeeth - Licensed GPL 3.0');
   Writeln('https://github.com/jimmckeeth/XkcdDelphiCli');
 
@@ -44,7 +46,7 @@ begin
       Writeln(ErrOutput, 'Options:');
       Writeln(ErrOutput, '  --comic-id 149           To open a specific comic by ID');
       Writeln(ErrOutput, '  --db-filename PATH       Override the SQLite search database path');
-      Writeln(ErrOutput, '  --explained              Show/cache Explain XKCD explanation text');
+      Writeln(ErrOutput, '  --explained, --explain   Show/cache Explain XKCD explanation text');
       Writeln(ErrOutput, '  --transcript             Show/cache Explain XKCD transcript text');
       Writeln(ErrOutput, '  --no-terminal-graphics   Open the comic in the default image viewer');
       Writeln(ErrOutput, '                             Instead of displaying in the terminal.');

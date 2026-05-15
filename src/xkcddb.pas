@@ -310,11 +310,13 @@ begin
       begin
         LResult.ComicID := LQuery.FieldByName('id').AsInteger;
         LResult.Title := LQuery.FieldByName('title').AsString;
+        LResult.Transcript := LQuery.FieldByName('transcript').AsString;
+        LResult.Explanation := LQuery.FieldByName('explanation').AsString;
         LResult.Snippet := BestSnippet(
           LQuery.FieldByName('title').AsString,
           LQuery.FieldByName('sub_text').AsString,
-          LQuery.FieldByName('transcript').AsString,
-          LQuery.FieldByName('explanation').AsString,
+          LResult.Transcript,
+          LResult.Explanation,
           AQuery);
         LResults.Add(LResult);
         LQuery.Next;
