@@ -1,17 +1,20 @@
 # UpdateVersion.ps1
-# Usage: pwsh -File UpdateVersion.ps1 [reference]
-param(
-    [string]$Reference = "HEAD"
-)
+# Usage: pwsh -File UpdateVersion.ps1
+# Run this BEFORE you commit to set the count for the upcoming commit.
 
-$CommitCount = (git rev-list --count $Reference).Trim()
-$ShortHash = (git rev-parse --short $Reference).Trim()
+Write-Host "Fetching latest changes..." -ForegroundColor Yellow
+git fetch origin main
+git pull --rebase origin main
+
+$CurrentCount = (git rev-list --count HEAD).Trim()
+$NextCount = [int]$CurrentCount + 1
 $Major = "1"
 $Minor = "0"
-$FullVersion = "$Major.$Minor.$CommitCount.$ShortHash"
-$ResourceVersion = "$Major.$Minor.$CommitCount.0"
+$Placeholder = "?hash?"
+$FullVersion = "$Major.$Minor.$NextCount.$Placeholder"
+$ResourceVersion = "$Major.$Minor.$NextCount.0"
 
-Write-Host "Determined version: $FullVersion (from $Reference)"
+Write-Host "Setting version for NEXT commit to: $FullVersion" -ForegroundColor Cyan
 
 # 1. Update src/xkcdversion.pas
 $VersionPasPath = "src/xkcdversion.pas"
@@ -47,9 +50,8 @@ foreach ($DprojFile in $DprojFiles) {
     $DprojContent = Get-Content -Path $DprojFile.FullName -Raw
     
     $NewContent = $DprojContent -replace "FileVersion=\d+\.\d+\.\d+\.\d+", "FileVersion=$ResourceVersion"
-    # Match both old X.X.X.X format and new hash-based format in ProductVersion
-    $NewContent = $NewContent -replace "ProductVersion=\d+\.\d+\.\d+\.[0-9a-f]+", "ProductVersion=$FullVersion"
-    $NewContent = $NewContent -replace "ProductVersion=\d+\.\d+\.\d+\.\d+", "ProductVersion=$FullVersion"
+    # Match hash-based format (with placeholder or existing hash) or old X.X.X.X format
+    $NewContent = $NewContent -replace "ProductVersion=\d+\.\d+\.\d+\.[^;]+", "ProductVersion=$FullVersion"
     
     if ($NewContent -eq $DprojContent) {
         Write-Host "$($DprojFile.Name) is already up to date."
@@ -59,4 +61,4 @@ foreach ($DprojFile in $DprojFiles) {
     }
 }
 
-Write-Host "Version update complete."
+Write-Host "Version update complete. You can now commit your changes." -ForegroundColor Green

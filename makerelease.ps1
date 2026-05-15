@@ -5,104 +5,108 @@ $ErrorActionPreference = "Stop"
 
 Write-Host "Starting release process..." -ForegroundColor Cyan
 
-# 0. Synchronize version information
-Write-Host "Synchronizing version information..." -ForegroundColor Yellow
-pwsh -File UpdateVersion.ps1
-
-$CommitCount = (git rev-list --count HEAD).Trim()
+# 0. Stamp the actual commit hash
 $ShortHash = (git rev-parse --short HEAD).Trim()
-$Major = "1"
-$Minor = "0"
-$Version = "$Major.$Minor.$CommitCount.$ShortHash"
-$Tag = "v$Version"
+Write-Host "Stamping binaries with commit hash: $ShortHash" -ForegroundColor Yellow
 
+$FilesToStamp = Get-ChildItem -Path "src/*.dproj", "src/xkcdversion.pas"
+foreach ($File in $FilesToStamp) {
+    $Content = Get-Content -Path $File.FullName -Raw
+    if ($Content -match "\?hash\?") {
+        Write-Host "Stamping $($File.Name)..."
+        $NewContent = $Content -replace "\?hash\?", $ShortHash
+        $NewContent | Out-File -FilePath $File.FullName -Encoding utf8 -NoNewline
+    }
+}
+
+# Get the version string from the stamped file for tagging
+$VersionLine = Get-Content "src/xkcdversion.pas" | Where-Object { $_ -match "CAppVersion = '(.+)';" }
+if ($VersionLine -match "'(.+)'") {
+    $Version = $Matches[1]
+} else {
+    Write-Error "Could not determine version from src/xkcdversion.pas"
+}
+
+$Tag = "v$Version"
 Write-Host "Building version $Version..." -ForegroundColor Cyan
 
-# 1. Build for all platforms in Release mode
-$Platforms = @("Win32", "Win64", "Linux64")
-$ProjectFile = "src\xkcd.dproj"
-$BuildScript = "C:\Users\jim\.agents\skills\delphi-build\scripts\DelphiBuildDPROJ.ps1"
+try {
+    # 1. Build for all platforms in Release mode
+    $Platforms = @("Win32", "Win64", "Linux64")
+    $ProjectFile = "src\xkcd.dproj"
+    $BuildScript = "C:\Users\jim\.agents\skills\delphi-build\scripts\DelphiBuildDPROJ.ps1"
 
-foreach ($Platform in $Platforms) {
-    Write-Host "Building for $Platform..." -ForegroundColor Yellow
-    pwsh -File $BuildScript -ProjectFile $ProjectFile -Config Release -Platform $Platform
-}
-
-# 2. Generate PDF Documentation
-Write-Host "Generating PDF documentation using Pandoc..." -ForegroundColor Yellow
-$HtmlFile = Join-Path $PWD "README.html"
-$PdfFile  = Join-Path $PWD "README.pdf"
-$EdgePath = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-
-if (Test-Path $PdfFile) { Remove-Item $PdfFile }
-pandoc README.md -s -o $HtmlFile
-
-if (Test-Path $HtmlFile) {
-    # Convert absolute paths to file:/// URIs for Edge
-    $HtmlUri = "file:///" + $HtmlFile.Replace('\', '/')
-    $PdfUri  = $PdfFile # --print-to-pdf takes a path, not a URI
-    
-    Write-Host "Printing $HtmlUri to PDF..." -ForegroundColor Gray
-    & $EdgePath --headless --disable-gpu --print-to-pdf=$PdfFile $HtmlUri
-    
-    # Wait for Edge to finish writing the file (with retries)
-    $MaxRetries = 5
-    $RetryCount = 0
-    while (!(Test-Path $PdfFile) -and ($RetryCount -lt $MaxRetries)) {
-        Start-Sleep -Seconds 1
-        $RetryCount++
-    }
-    
-    if (Test-Path $PdfFile) {
-        Write-Host "PDF generated successfully ($((Get-Item $PdfFile).Length) bytes)." -ForegroundColor Green
-        Remove-Item $HtmlFile
-    } else {
-        Write-Error "Failed to generate README.pdf after $MaxRetries seconds"
-    }
-} else {
-    Write-Error "Pandoc failed to generate README.html"
-}
-
-# 3. Package archives
-Write-Host "Packaging archives..." -ForegroundColor Yellow
-$ReleaseDir = "releases"
-if (!(Test-Path $ReleaseDir)) { New-Item -ItemType Directory -Path $ReleaseDir }
-
-foreach ($Platform in $Platforms) {
-    $ArchiveName = "xkcd-$CommitCount.$ShortHash-$Platform.7z"
-    $ArchivePath = Join-Path $ReleaseDir $ArchiveName
-    
-    $BinDir = "bin\$Platform\Release"
-    $FilesToInclude = @(
-        (Join-Path $BinDir "xkcd.exe")
-        (Join-Path $BinDir "xkcd")
-        (Join-Path $BinDir "sk4d.dll")
-        (Join-Path $BinDir "libsk4d.so")
-        "README.pdf"
-        "LICENSE"
-    )
-    
-    # Filter only existing files (e.g. .exe only on windows, extensionless only on linux)
-    $ExistingFiles = $FilesToInclude | Where-Object { Test-Path $_ }
-    
-    if ($ExistingFiles.Count -eq 0) {
-        Write-Error "No binaries found for $Platform in $BinDir"
+    foreach ($Platform in $Platforms) {
+        Write-Host "Building for $Platform..." -ForegroundColor Yellow
+        pwsh -File $BuildScript -ProjectFile $ProjectFile -Config Release -Platform $Platform
     }
 
-    Write-Host "Creating $ArchiveName..."
-    if (Test-Path $ArchivePath) { Remove-Item $ArchivePath }
-    & 7z a -t7z $ArchivePath $ExistingFiles
-}
+    # 2. Generate PDF Documentation
+    Write-Host "Generating PDF documentation using Pandoc..." -ForegroundColor Yellow
+    $HtmlFile = Join-Path $PWD "README.html"
+    $PdfFile  = Join-Path $PWD "README.pdf"
+    $EdgePath = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 
-# 4. GitHub Release
-if ($args -contains "--push") {
-    Write-Host "Pushing release to GitHub..." -ForegroundColor Yellow
-    $Archives = Get-ChildItem -Path $ReleaseDir -Filter "xkcd-$CommitCount.$ShortHash-*.7z" | Select-Object -ExpandProperty FullName
-    
-    & gh release create $Tag $Archives --title "Release $Version" --notes "Automated release generated by @makerelease.ps1"
-    Write-Host "Release $Tag pushed successfully!" -ForegroundColor Green
-} else {
-    Write-Host "Skipping GitHub push. Run with --push to upload to GitHub." -ForegroundColor Gray
+    if (Test-Path $PdfFile) { Remove-Item $PdfFile }
+    pandoc README.md -s -o $HtmlFile
+
+    if (Test-Path $HtmlFile) {
+        $HtmlUri = "file:///" + $HtmlFile.Replace('\', '/')
+        & $EdgePath --headless --disable-gpu --print-to-pdf=$PdfFile $HtmlUri
+        
+        $MaxRetries = 5
+        $RetryCount = 0
+        while (!(Test-Path $PdfFile) -and ($RetryCount -lt $MaxRetries)) {
+            Start-Sleep -Seconds 1
+            $RetryCount++
+        }
+        
+        if (Test-Path $PdfFile) {
+            Write-Host "PDF generated successfully." -ForegroundColor Green
+            Remove-Item $HtmlFile
+        } else {
+            Write-Error "Failed to generate README.pdf"
+        }
+    }
+
+    # 3. Package archives
+    Write-Host "Packaging archives..." -ForegroundColor Yellow
+    $ReleaseDir = "releases"
+    if (!(Test-Path $ReleaseDir)) { New-Item -ItemType Directory -Path $ReleaseDir }
+
+    foreach ($Platform in $Platforms) {
+        $ArchiveName = "xkcd-$Version-$Platform.7z"
+        $ArchivePath = Join-Path $ReleaseDir $ArchiveName
+        
+        $BinDir = "bin\$Platform\Release"
+        $FilesToInclude = @(
+            (Join-Path $BinDir "xkcd.exe")
+            (Join-Path $BinDir "xkcd")
+            (Join-Path $BinDir "sk4d.dll")
+            (Join-Path $BinDir "libsk4d.so")
+            "README.pdf"
+            "LICENSE"
+        )
+        
+        $ExistingFiles = $FilesToInclude | Where-Object { Test-Path $_ }
+        
+        Write-Host "Creating $ArchiveName..."
+        if (Test-Path $ArchivePath) { Remove-Item $ArchivePath }
+        & 7z a -t7z $ArchivePath $ExistingFiles
+    }
+
+    # 4. GitHub Release
+    if ($args -contains "--push") {
+        Write-Host "Pushing release to GitHub..." -ForegroundColor Yellow
+        $Archives = Get-ChildItem -Path $ReleaseDir -Filter "xkcd-$Version-*.7z" | Select-Object -ExpandProperty FullName
+        & gh release create $Tag $Archives --title "Release $Version" --notes "Automated release generated by @makerelease.ps1"
+        Write-Host "Release $Tag pushed successfully!" -ForegroundColor Green
+    }
+
+} finally {
+    # 5. Revert the hash stamping to keep the repo clean
+    Write-Host "Cleaning up stamped files..." -ForegroundColor Gray
+    git restore src/*.dproj src/xkcdversion.pas
 }
 
 Write-Host "Release process completed." -ForegroundColor Green
