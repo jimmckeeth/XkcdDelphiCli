@@ -4,7 +4,7 @@ unit xkcdversion;
 interface
 
 const
-  CAppVersion = '1.0.42.?hash?';
+  CAppVersion = '1.0.43.?hash?';
 
 implementation
 
