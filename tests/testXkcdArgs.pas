@@ -54,6 +54,8 @@ type
     procedure SearchCommandParsesQuery;
     [Test]
     procedure SearchCommandRequiresQuery;
+    [Test]
+    procedure ParseExplainAlias;
   end;
 
 implementation
@@ -250,6 +252,14 @@ begin
   Assert.WillRaise(
     procedure begin ParseArgs(['search']); end,
     EXkcdArgError);
+end;
+
+procedure TTestXkcdArgs.ParseExplainAlias;
+var
+  LOptions: TXkcdOptions;
+begin
+  LOptions := ParseArgs(['show', '--explain']);
+  Assert.IsTrue(LOptions.IncludeExplanation);
 end;
 
 initialization

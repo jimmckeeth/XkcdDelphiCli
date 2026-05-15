@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update Version Information
+        shell: pwsh
+        run: ./UpdateVersion.ps1
+
+      - name: Setup Delphi
+        # Note: This requires a custom action or pre-installed Delphi.
+        # Since Delphi is usually not on public runners, this workflow
+        # serves as a template for a self-hosted runner or manual release.
+        run: echo "Delphi build would run here using DelphiBuildDPROJ.ps1"
+
+      # The rest of the steps would mirror makerelease.ps1

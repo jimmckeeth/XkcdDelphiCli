@@ -86,3 +86,6 @@ modules/
 /bin
 *.res
 XkcdDelphiCli.af
+.gstack/
+README.pdf
+/releases

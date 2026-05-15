@@ -230,8 +230,18 @@ begin
     for var LSearchResult in LResults do
     begin
       Writeln(Format('#%d: %s', [LSearchResult.ComicID, LSearchResult.Title]));
-      if LSearchResult.Snippet <> '' then
-        WriteIndentedWrappedText(LSearchResult.Snippet, '  ');
+      
+      if AOptions.IncludeExplanation and (LSearchResult.Explanation <> '') then
+      begin
+        Writeln('Explanation:');
+        WriteIndentedWrappedText(LSearchResult.Explanation, '  ');
+      end;
+
+      if AOptions.IncludeTranscript and (LSearchResult.Transcript <> '') then
+      begin
+        Writeln('Transcript:');
+        WriteIndentedWrappedText(LSearchResult.Transcript, '  ');
+      end;
     end;
     Exit;
   end;
