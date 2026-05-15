@@ -4,10 +4,14 @@
 
 Write-Host "Fetching latest changes..." -ForegroundColor Yellow
 git fetch origin main
-git pull --rebase origin main
 
-$CurrentCount = (git rev-list --count HEAD).Trim()
-$NextCount = [int]$CurrentCount + 1
+# Get count from server branch
+$ServerCount = (git rev-list --count origin/main).Trim()
+# Get count of local commits ahead of server
+$LocalAheadCount = (git rev-list --count origin/main..HEAD).Trim()
+
+# The next count is Server + Local + 1 (the commit we are making)
+$NextCount = [int]$ServerCount + [int]$LocalAheadCount + 1
 $Major = "1"
 $Minor = "0"
 $Placeholder = "?hash?"
